@@ -3,6 +3,7 @@ from tts_and_player_interface import Interface
 import re
 import openai
 import threading
+from dynamic_memory import AIMemory
 from tts import TextToSpeech
 from audioplayer import AudioPlayer
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ class AbbeyAI():
         self.blackboard = blackboard
         self.audio_player = audio_player
         self.tts =  tts
+        self.memory = AIMemory()
         
     '''    
     def prompt(self, prompt):
@@ -34,7 +36,10 @@ class AbbeyAI():
         
         messages = [
             {
-            "role": "system", "content": f"You are an assistant and your name is {self.name}. You answer with straight to the point. Format your response to readable by voice type, remember, I can only hear not see. Respoinse must be at least 3 sentences" 
+            "role": "system", "content": f"You are an assistant and your name is {self.name}. You are sassy, loofy, smart-ass but intelligent being. Format your response to readable by voice type, remember, I can only hear not see. Response must be at least 3 sentences" 
+            },
+            {
+              "role": "system", "content": f"Your chat history: {self.memory.chat_history}"  
             },
             {
                 "role": "user", "content": prompt
@@ -45,6 +50,9 @@ class AbbeyAI():
             model=self.model,
             stream=self.stream
         )
+        
+        self.memory.add_chat_history("user", prompt)
+        
         
         self.tts.start()
         self.audio_player.listen()
@@ -66,6 +74,8 @@ class AbbeyAI():
             
             except:
                 pass
+            
+        self.memory.add_chat_history("assistant", full_response)
             
         print("finished abbey")
         self.tts.end()

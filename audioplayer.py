@@ -42,7 +42,6 @@ class AudioPlayer():
                     
                 
             else:
-                print('waiting for file')
                 if not self.is_playing and len(self.queue) <= 0 and len(self.tts_queue) <= 0:
                     print('ended listening')
                     break
