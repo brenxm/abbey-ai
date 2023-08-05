@@ -24,6 +24,14 @@ class AIMemory():
             self.chat_history.pop(0)
 
         self._update_memory()
+        
+        
+    def clear(self):
+        self.chat_history = []
+        print('succesfully deleted chat history.')
+        self._update_memory()
+        
+        return "Chat or conversation cleared succesfull!"
     
     # update the memory file in data with every changes made
     def _update_memory(self):
@@ -44,3 +52,5 @@ class AIMemory():
             self.chat_history = data["chat_history"]
         except:
             print("No existing memory. Starting from fresh")
+            
+    
