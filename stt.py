@@ -7,6 +7,7 @@ import openai
 import io
 import tempfile
 
+
 from dotenv import load_dotenv
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -24,31 +25,38 @@ class VoiceInput():
         if not self.voice_trigger:
             self._init_keyboard_listeners()
             
+        
+        # waiting for key strokes
         while True:
-            if self.voice_trigger:
-                buffer = self._detect_noise()
-                text = self._start_record(buffer=buffer, timeout=1.5)
-                fn(text)
-                return
-
-            elif self._keyboard_listening:
+            
+            while self._keyboard_listening:
                 text = self._start_record()
                 fn(text)
-                return
-        
+                # Wait until the audio player and tts is completed
+                while  self.audio_player.is_playing or len(self.audio_player.queue) > 0:
+                    time.sleep(0.3)
+                    print('still waiting')
+                self._init_keyboard_listeners()
+                
+            time.sleep(0.3)
                 
      
     def _init_keyboard_listeners(self):
         def onpress(key):
-            if key.char == "q":
-                print('pressed q')
-                self._keyboard_listening = True
+            try:
+                if key.char == "q":
+                    self._keyboard_listening = True
+            except:
+                pass
             
         def onrelease(key):
-            if key.char == "q":
-                print('rlease q')
-                self._keyboard_listening = False
-                return False
+            try:
+                if key.char == "q":
+                    print('rlease q')
+                    self._keyboard_listening = False
+                    return False
+            except:
+                pass
                 
         listener = keyboard.Listener(on_press=onpress, on_release=onrelease)
         listener.start()

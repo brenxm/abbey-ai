@@ -33,12 +33,12 @@ class AudioPlayer():
                 sleep(0.5) 
                 
             if len(self.queue) > 0:
-                audio_bytes = self.queue.pop(0)
+                audio_bytes = self.queue[0]
                 rate, data = wavfile.read(io.BytesIO(audio_bytes))
                 # Play the WAV file using sounddevice
                 sd.play(data, rate)
                 sd.wait()  # Wait for the playback to finish
-                print('played audio')
+                self.queue.pop(0)
                     
                 
             else:

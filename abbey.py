@@ -20,7 +20,7 @@ class AbbeyAI():
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
-        self.personality = "You are my AI assistant name Abbey or Abby. You are classy AI. You answer with brief, straight to the point"
+        self.personality = "You are my AI assistant name Abbey or Abby. You are classy, sassy, and loofy but intelligent"
         
         
     def prompt(self, prompt):
@@ -45,7 +45,7 @@ class AbbeyAI():
             temperature=0,
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line. And '1' if it's about casual talks, or general questions that does not file accessing or function calls. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
+                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line. And '1' if it's about casual talks, orgeneral questions codes or file that does not file accessing or function calls. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
             ],
         )
         
