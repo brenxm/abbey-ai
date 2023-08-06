@@ -76,7 +76,7 @@ def generate_action_node(prompt, token_used = 0):
             "description": "Analyze and comment highlighted code, display on blackboard",
             "sequence": ['vscode_get('highlighted')', 'read_file(vscode_get)', 'generate_text(read_file)', 'bboard_init()', 'bboard_display(generate_text)']
         }
-        (Explanation: The sequence starts by getting the highlighted code from VS Code using vscode_get('highlighted'). It then reads and analyzes the content for errors using read_file(vscode_get). Next, it generates the text with the appropriate comments using generate_text(read_file). Finally, it initializes the blackboard with bboard_init() and displays the commented code on the blackboard using bboard_display(generate_text))
+        (Explanation: The sequence starts by getting the highlighted code from VS Code using vscode_get('highlighted'). It then reads and analyzes the content for errors using read_file(vscode_get). Next, it generates the text with the appropriate comments using generate_text(read_file). Finally, it initializes the blackboard with bboard_init() and displays the commented code on the blackboard using bboard_display(generate_t    ext))
         
         prompt: """
         + prompt

@@ -2,7 +2,6 @@ import os
 from tts_and_player_interface import Interface
 import re
 import openai
-import threading
 from dynamic_memory import AIMemory
 from tts import TextToSpeech
 from audioplayer import AudioPlayer
@@ -20,7 +19,7 @@ class AbbeyAI():
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
-        self.personality = "You are my AI assistant name Abbey or Abby. You are classy, sassy, and loofy but intelligent"
+        self.personality = "You are my AI assistant name Abbey or Abby. You are classy, sassy, and loofy but intelligent. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc."
         
         
     def prompt(self, prompt):
@@ -45,7 +44,7 @@ class AbbeyAI():
             temperature=0,
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line. And '1' if it's about casual talks, orgeneral questions codes or file that does not file accessing or function calls. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
+                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line. And '1' if it's about casual talks, orgeneral questions codes or file that does not need a file accessing or calling any functions. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
             ],
         )
         
@@ -88,8 +87,8 @@ class AbbeyAI():
             self.tts.start()
             self.audio_player.listen()
             self.memory.add_chat_history("user", prompt)
-            response_message = self._stream(response)
-            self.memory.add_chat_history("assistant", response_message)
+            full_message = self._stream(response)
+            self.memory.add_chat_history("assistant", full_message)
             self.audio_player.stop()
             self.tts.end()
             

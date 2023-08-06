@@ -4,9 +4,7 @@ from pynput import keyboard
 import time
 import os
 import openai
-import io
 import tempfile
-
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -24,7 +22,6 @@ class VoiceInput():
     def init(self, fn):
         if not self.voice_trigger:
             self._init_keyboard_listeners()
-            
         
         # waiting for key strokes
         while True:
@@ -44,14 +41,14 @@ class VoiceInput():
     def _init_keyboard_listeners(self):
         def onpress(key):
             try:
-                if key.char == "q":
+                if key == key.f20:
                     self._keyboard_listening = True
             except:
                 pass
             
         def onrelease(key):
             try:
-                if key.char == "q":
+                if key == key.f20:
                     print('rlease q')
                     self._keyboard_listening = False
                     return False
@@ -79,11 +76,11 @@ class VoiceInput():
             if len(buffer) > buffer_length:
                 buffer.pop(0)
                 
-                
         stream.stop_stream()
         stream.close()
         p.terminate()
         return b"".join(buffer)
+    
 
     def _start_record(self, timeout=None, phrase_time_limit=None, buffer=None):
         with sr.Microphone() as source:
