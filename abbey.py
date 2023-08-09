@@ -1,5 +1,4 @@
 import os
-from tts_and_player_interface import Interface
 import re
 import openai
 from dynamic_memory import AIMemory
@@ -15,11 +14,11 @@ class AbbeyAI():
         self.stream = True
         self.text_queue = text_queue
         self.name = name
-        self.blackboard = blackboard
+        self.blackboard = blackboard 
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
-        self.personality = "You are my AI assistant name Abbey or Abby. You are classy, sassy, and loofy but intelligent. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc."
+        self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, coherent and elaborates but straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
         
         
     def prompt(self, prompt):

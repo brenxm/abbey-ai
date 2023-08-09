@@ -3,15 +3,15 @@ import os
 import json
 
 class AIMemory():
-    def __init__(self):
+    def __init__(self, chat_limit = 5):
         self.chat_history = []
         self.path_file = os.path.join("data", "dynamic_memory", "ai_dynamic_memory.json")
-        
+        self.chat_limit = chat_limit
         self._load_memory()
         
     def add_chat_history(self, name, message):
         
-        CHAT_LIMIT = 10 # limit to keep includes user and assistant
+        self.chat_limit = 5 # limit to keep includes user and assistant
         
         now = datetime.now()
         date = now.strftime("%m/%d/%Y-%H:%M:%S")
@@ -20,7 +20,7 @@ class AIMemory():
         
         self.chat_history.append(chat)
         
-        if len(self.chat_history) > 10:
+        if len(self.chat_history) > self.chat_limit:
             self.chat_history.pop(0)
 
         self._update_memory()
