@@ -1,23 +1,28 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFrame, QPushButton, QVBoxLayout, QLabel, QSizePolicy, QHBoxLayout, QWidget, QTextEdit, QScrollArea
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QSize
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QSize, pyqtSignal, QTimer
 from PyQt6.QtGui import QIcon, QKeyEvent, QTextDocument
 import sys
 
 
 class TextareaSubmitEvent(QTextEdit):
-    def __init__(self, chatbox_layout):
+    newMessageAdded = pyqtSignal()
+
+    def __init__(self, chatbox_layout, scroll_area):
         super().__init__()
         self.chatbox_layout = chatbox_layout
+        self.scroll_area = scroll_area
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
             text = self.toPlainText()
-            available_width = self.chatbox_layout.parentWidget().parentWidget().width() - 20 # Adjust based on padding and margins
+            available_width = self.chatbox_layout.parentWidget().parentWidget().width() - 20
             label = ChatBubble(text, available_width)
             self.chatbox_layout.addWidget(label)
             self.clear()
+            self.newMessageAdded.emit()
         else:
             super().keyPressEvent(event)
+
 
 
 class ChatBubble(QLabel):
@@ -61,7 +66,8 @@ class MainWindow(QMainWindow):
         input_layout_bg = QWidget()
         input_layout_bg.setStyleSheet("background-color: rgb(70, 70, 70); border-radius: 7.5px")
         input_layout_bg.setFixedHeight(50)
-        textarea = TextareaSubmitEvent(response_layout)
+        textarea = TextareaSubmitEvent(response_layout, self.scroll_area)
+        textarea.newMessageAdded.connect(self.scrollToBottom)
         textarea.setFixedHeight(50)
         send_btn = QPushButton()
         icon = QIcon("gui/send_btn.png")
@@ -98,6 +104,9 @@ class MainWindow(QMainWindow):
         self.animation.setEndValue(QRect(screen_size.width(), 0, self.width, self.height))
         self.animation.finished.connect(self.hide)
         self.animation.start()
+        
+    def scrollToBottom(self):
+        QTimer.singleShot(50, lambda: self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum()))
 
 
 if __name__ == "__main__":
