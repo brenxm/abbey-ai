@@ -23,11 +23,7 @@ tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, ai_name, None, audio_player, tts)
 
-# Initialized to their own thread
-#voice_input_thread = VoiceInputThread(voice_input, abbey.prompt)
-
-#voice_input_thread.start()
-
+# Current way to initialize the program
 input_thread = threading.Thread(target=voice_input.init, args=(abbey.prompt,))
 input_thread.start()
 
