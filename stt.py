@@ -3,8 +3,10 @@ import pyaudio
 from pynput import keyboard
 import time
 import os
+import io
 import openai
 import tempfile
+import librosa
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,7 +19,7 @@ class VoiceInput():
         self.recognizer = sr.Recognizer()
         self._keyboard_listening = False
         self.audio_player = audio_player
-        
+    
     
     def init(self, fn):
         if not self.voice_trigger:
@@ -57,7 +59,7 @@ class VoiceInput():
                 
         listener = keyboard.Listener(on_press=onpress, on_release=onrelease)
         listener.start()
-                
+
     
     def _detect_noise(threshold=300, buffer_length=10):
         p = pyaudio.PyAudio()
@@ -91,7 +93,7 @@ class VoiceInput():
 
                 # Add buffer if needed
                 audio_data = sr.AudioData(buffer + audio_data.get_wav_data(), 44100, 2) if buffer else audio_data
-
+              
                 # Write the audio data to a temporary WAV file
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                     temp_file.write(audio_data.get_wav_data())

@@ -5,11 +5,9 @@ from audioplayer import AudioPlayer
 from threading import Lock
 from PyQt6.QtCore import QThread
 from PyQt6.QtWidgets import QApplication
-import sys
 import time
 import threading
 import subprocess
-from pynput import keyboard
 from gui.blackboard import MainWindow
 
 
@@ -36,4 +34,4 @@ input_thread.start()
 def show_blackboard():
     subprocess.run(['python', 'gui/blackboard.py'], stdout=subprocess.PIPE)
     
-show_blackboard()
+#show_blackboard()
