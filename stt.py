@@ -19,14 +19,17 @@ class VoiceInput():
         self.recognizer = sr.Recognizer()
         self._keyboard_listening = False
         self.audio_player = audio_player
+        self.listening = True
     
     
     def init(self, fn):
         if not self.voice_trigger:
             self._init_keyboard_listeners()
+            
+        self.listening = True
         
         # waiting for key strokes
-        while True:
+        while self.listening:
             
             while self._keyboard_listening:
                 text = self._start_record()
@@ -116,6 +119,8 @@ class VoiceInput():
                     return text
             except:
                 print('Not a good read, try again')
+                
+  
 
 
                 

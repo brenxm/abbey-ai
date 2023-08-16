@@ -29,6 +29,7 @@ class TextToSpeech():
         self.text_queue.append(text)
         
     def end(self):
+        
         self.is_converting = False
         
     def start(self):
@@ -62,6 +63,7 @@ class TextToSpeech():
                     break
                 
             time.sleep(0.1)
+            print("still running")
                 
         print('ended converting')
         
