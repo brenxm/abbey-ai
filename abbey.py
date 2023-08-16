@@ -18,7 +18,7 @@ class AbbeyAI():
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
-        self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, coherent and elaborates but straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
+        self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
         
         
     def prompt(self, prompt_input):
@@ -96,13 +96,7 @@ class AbbeyAI():
             "stream": True,
             "content": response
         }
-        self.tts.start()
-        self.audio_player.listen()
-        self.memory.add_chat_history("user", prompt)
-        full_message = self.stream(response)
-        self.memory.add_chat_history("assistant", full_message)
-        self.audio_player.stop()
-        self.tts.end()
+        
             
     def _function_prompt(self, prompt):
         '''
@@ -160,12 +154,11 @@ class AbbeyAI():
                 stream=True
             )
             
-            self.audio_player.listen()
-            self.tts.start()
-            self._stream(second_response)
-            self.tts.end()
-            self.audio_player.stop()
-        
+            
+            return {
+                "stream": True,
+                "content": second_response
+            }
         
     def stream_result(self, response):
         sentence = ""

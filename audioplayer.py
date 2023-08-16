@@ -27,28 +27,21 @@ class AudioPlayer():
         self.is_pause = False
         
     def _start_player(self):
-        while(True):
-            while self.is_pause:
-                print("on pause")
-                sleep(0.5) 
-                
-            if len(self.queue) > 0:
-                audio_bytes = self.queue[0]
-                rate, data = wavfile.read(io.BytesIO(audio_bytes))
-                # Play the WAV file using sounddevice
-                sd.play(data, rate)
-                sd.wait()  # Wait for the playback to finish
-                self.queue.pop(0)
-                    
-                
-            else:
-                if not self.is_playing and len(self.queue) <= 0 and len(self.tts_queue) <= 0:
-                    print('ended listening')
-                    break
-                
-            sleep(0.05)
+        self.is_playing = True
+        audio_bytes = self.queue.pop(0)
+        rate, data = wavfile.read(io.BytesIO(audio_bytes))
+        # Play the WAV file using sounddevice
+        sd.play(data, rate)
+        sd.wait()  # Wait for the playback to finish
+        
+        if len(self.queue) > 0:
+            self._start_player()
+        
+        else:
+            self.is_playing = False
                 
     def listen(self):
-        self.is_playing = True
-        player_thread = threading.Thread(target=self._start_player)
-        player_thread.start()
+        # Thread is already allocated for this audio player if playing, ensure to use a thread only when it's not playing
+        if not self.is_playing:
+            player_thread = threading.Thread(target=self._start_player)
+            player_thread.start()

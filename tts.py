@@ -32,12 +32,12 @@ class TextToSpeech():
         
         self.is_converting = False
         
-    def start(self):
+    def start(self, cb_play_audio):
         self.is_converting = True
-        converting_thread = threading.Thread(target=self.converting)
+        converting_thread = threading.Thread(target=self.converting, args=(cb_play_audio,))
         converting_thread.start()
         
-    def converting(self):
+    def converting(self, cb_play_audio):
         print('started converting')
         bigkas = 0
         while True:
@@ -57,6 +57,7 @@ class TextToSpeech():
                 
                 self.audio_player.load_to_queue(response.audio_content)
                 print('converted audio')
+                cb_play_audio()
                     
             else:
                 if not self.is_converting and len(self.text_queue) <= 0:
