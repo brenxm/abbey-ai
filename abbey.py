@@ -106,7 +106,7 @@ class AbbeyAI():
         messages = [
             {"role": "system", "content": f"{self.personality} Format your response to readable by voice type, remember, I can only hear not see. Response must be at least 3 sentences"},
             {"role": "system", "content": "You have the access of my system files, personal data and you can run functions"},
-            {"role": "system", "content": "If you need to call a function, only call the function that was provided."},
+            {"role": "system", "content": "You are required to call at least one function from the function provided. If you need to call a function, only call the function that was provided."},
             {"role": "user", "content": prompt}
         ]
         
