@@ -87,12 +87,14 @@ class VoiceInput():
         return b"".join(buffer)
     
 
-    def _start_record(self, timeout=None, phrase_time_limit=None, buffer=None):
+    def _start_record(self, timeout=1000, phrase_time_limit=None, buffer=None):
         with sr.Microphone() as source:
             print("Please say something")
             try:
                 # Capture audio from the microphone
-                audio_data = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
+                while self._keyboard_listening:
+                    audio_data = self.recognizer.listen(source)
+                print("forced to stop")
 
                 # Add buffer if needed
                 audio_data = sr.AudioData(buffer + audio_data.get_wav_data(), 44100, 2) if buffer else audio_data
@@ -119,6 +121,15 @@ class VoiceInput():
                     return text
             except:
                 print('Not a good read, try again')
+                
+    def _record_audio(self):
+        '''
+        Returns the audio_data
+        '''
+        with sr.Microphone as source:
+            audio_data = self.recognizer.listen(source)
+            
+        return audio_data
                 
   
 

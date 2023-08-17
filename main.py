@@ -48,7 +48,7 @@ def handle_prompt(text):
     return True
         
     
-# voice_input.init(handle_prompt)
+voice_input.init(handle_prompt)
 
 
 
