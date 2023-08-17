@@ -160,7 +160,7 @@ class AbbeyAI():
                 "content": second_response
             }
         
-    def stream_result(self, response):
+    def stream_result(self, response, tts_cb_fn, listen_audio_cb_fn):
         sentence = ""
         full_response = ""
         pattern = r"[a-zA-Z][.?!]$"
@@ -174,6 +174,7 @@ class AbbeyAI():
                 
                 if match:
                     self.text_queue.append(sentence)
+                    tts_cb_fn(listen_audio_cb_fn)
                     print(sentence)
                     sentence = ""
             

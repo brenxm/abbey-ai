@@ -10,7 +10,7 @@ import time
 class TextToSpeech():
     def __init__(self, text_queue, audio_player):
         self.text_queue = text_queue # per element is string to be converted
-        self.is_converting = True
+        self.is_converting = False
         # init client
         self.client = texttospeech.TextToSpeechClient()
         self.voice = texttospeech.VoiceSelectionParams(
@@ -32,41 +32,35 @@ class TextToSpeech():
         
         self.is_converting = False
         
-    def start(self, cb_play_audio):
-        self.is_converting = True
-        converting_thread = threading.Thread(target=self.converting, args=(cb_play_audio,))
-        converting_thread.start()
+    def convert(self, cb_play_audio):
+        if not self.is_converting:
+            converting_thread = threading.Thread(target=self._converting, args=(cb_play_audio,))
+            converting_thread.start()
         
-    def converting(self, cb_play_audio):
-        print('started converting')
-        bigkas = 0
-        while True:
-            if len(self.text_queue) > 0:
-                text = self.text_queue.pop(0)
-                    
-                input_text = texttospeech.SynthesisInput(
-                    text=text
-                )
-                
-                response = self.client.synthesize_speech(
-                    input=input_text,
-                    voice=self.voice,
-                    audio_config=self.audio_config
-                )
-                
-                
-                self.audio_player.load_to_queue(response.audio_content)
-                print('converted audio')
-                cb_play_audio()
-                    
-            else:
-                if not self.is_converting and len(self.text_queue) <= 0:
-                    break
-                
-            time.sleep(0.1)
-            print("still running")
-                
-        print('ended converting')
+    def _converting(self, cb_play_audio):
+        self.is_converting = True
+        text = self.text_queue.pop(0)
+            
+        input_text = texttospeech.SynthesisInput(
+            text=text
+        )
+        
+        response = self.client.synthesize_speech(
+            input=input_text,
+            voice=self.voice,
+            audio_config=self.audio_config
+        )
+        
+        
+        self.audio_player.load_to_queue(response.audio_content)
+        print('converted audio')
+        cb_play_audio()
+        
+        if len(self.text_queue) > 0:
+            self._converting(cb_play_audio)
+            
+        else:
+            self.is_converting = False 
         
     
     def _next_filename(self, directory, prefix="", extension=".txt"):

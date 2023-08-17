@@ -122,18 +122,3 @@ class VoiceInput():
             except:
                 print('Not a good read, try again')
                 
-    def _record_audio(self):
-        '''
-        Returns the audio_data
-        '''
-        with sr.Microphone as source:
-            audio_data = self.recognizer.listen(source)
-            
-        return audio_data
-                
-  
-
-
-                
-                
-        

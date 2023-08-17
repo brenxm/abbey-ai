@@ -28,19 +28,16 @@ def handle_prompt(text):
 
     if result_obj["stream"]:
         # Start convertion of the text generated from openai, arg is an audio player function
-        tts.start(audio_player.listen)
         
         # Add to user's prompt to chat history
         abbey.memory.add_chat_history("user", text)
         
+        
         # Full response message is returned after all chunks are read
-        full_message = abbey.stream_result(result_obj["content"])
+        full_message = abbey.stream_result(result_obj["content"], tts.convert, audio_player.listen)
         
         # Add openai full response to chat history
         abbey.memory.add_chat_history("assistant", full_message)
-        
-        # End audio converstion
-        tts.end()
         
      
     else:
