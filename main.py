@@ -29,9 +29,9 @@ def handle_prompt(text):
     if result_obj["stream"]:
         # Start convertion of the text generated from openai, arg is an audio player function
         
+        print(result_obj)
         # Add to user's prompt to chat history
         abbey.memory.add_chat_history("user", text)
-        
         
         # Full response message is returned after all chunks are read
         full_message = abbey.stream_result(result_obj["content"], tts.convert, audio_player.listen)
@@ -44,7 +44,8 @@ def handle_prompt(text):
         print("didn't get an object")
     return True
         
-    
+
+# Init/listen to keystroke event
 voice_input.init(handle_prompt)
 
 

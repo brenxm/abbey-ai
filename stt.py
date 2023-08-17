@@ -1,16 +1,11 @@
+from pynput import keyboard
 import speech_recognition as sr
 import pyaudio
-from pynput import keyboard
 import time
 import os
-import io
 import openai
 import tempfile
-import librosa
-
-from dotenv import load_dotenv
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+import re
 
 
 class VoiceInput():
@@ -33,6 +28,12 @@ class VoiceInput():
             
             while self._keyboard_listening:
                 text = self._start_record()
+                # If whisper not a valid synthesize
+                if not text:
+                    self._init_keyboard_listeners()
+                    break
+                
+                print(f"{text} - it's a good read, sending to prompt")
                 fn(text)
                 # Wait until the audio player and tts is completed
                 while  self.audio_player.is_playing or len(self.audio_player.queue) > 0:
@@ -94,7 +95,6 @@ class VoiceInput():
                 # Capture audio from the microphone
                 while self._keyboard_listening:
                     audio_data = self.recognizer.listen(source)
-                print("forced to stop")
 
                 # Add buffer if needed
                 audio_data = sr.AudioData(buffer + audio_data.get_wav_data(), 44100, 2) if buffer else audio_data
@@ -114,7 +114,13 @@ class VoiceInput():
 
                 text = transcript['text']
 
-                print(text)
+                # Ensure that transcripted text is valid
+                # Failed transcript normally just contains '.' (dot) and spaces
+                match = re.search(r'[a-zA-Z]', text)
+                if not match:
+                    return None
+                
+                
                 if self.voice_trigger and ("abby" in text.lower() or "abbey" in text.lower()):
                     return text
                 else:

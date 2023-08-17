@@ -30,12 +30,16 @@ class AbbeyAI():
         if not prompt_input:
             return
         
+        print(f"receive input prompt from abbey prompt. {prompt_input}")
+        
         response_code = self._prompt_router(prompt_input)
         
         if response_code == "1":
+            print("sent as general prompt")
             return self._general_prompt(prompt_input)
         
         elif response_code == "2":
+            print("sent as functional prompt")
             return self._function_prompt(prompt_input)
         
         else:
@@ -164,12 +168,12 @@ class AbbeyAI():
         sentence = ""
         full_response = ""
         pattern = r"[a-zA-Z][.?!]$"
-        
         for chunk in response:
             try:
                 chunk_text = chunk["choices"][0]["delta"]["content"]
                 full_response += chunk_text
                 sentence += chunk_text
+                print(sentence)
                 match = re.search(pattern, sentence)
                 
                 if match:
@@ -180,5 +184,10 @@ class AbbeyAI():
             
             except:
                 pass
+                
+        # Ensure to send the last sentence to queue
+        if sentence:
+            self.text_queue.append(sentence)
+            tts_cb_fn(listen_audio_cb_fn)
         
         return full_response

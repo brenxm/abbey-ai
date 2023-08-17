@@ -3,7 +3,6 @@ import wavio
 from time import sleep
 import threading
 from scipy.io import wavfile
-import os
 import io
 
 
