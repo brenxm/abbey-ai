@@ -1,23 +1,26 @@
-import os
-import re
-import openai
+from utils.clipboard import get_copied_text
 from dynamic_memory import AIMemory
-from tts import TextToSpeech
 from audioplayer import AudioPlayer
 from dotenv import load_dotenv
+from tts import TextToSpeech
+import openai
+import os
+import re
+
 load_dotenv()
 
 class AbbeyAI():
-    def __init__(self, text_queue, name, blackboard, audio_player, tts, model="gpt-3.5-turbo-0613", stream=True):
+    def __init__(self, text_queue, blackboard, audio_player, tts, model="gpt-3.5-turbo-0613"):
         openai.api_key = os.getenv("OPENAI_API_KEY")
         self.model = model
         self.stream = True
         self.text_queue = text_queue
-        self.name = name
+        self.name = ""
         self.blackboard = blackboard 
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
+        self.personality = ""
         self.system_inputs = []
         self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
         
@@ -31,16 +34,12 @@ class AbbeyAI():
         if not prompt_input:
             return
         
-        print(f"receive input prompt from abbey prompt. {prompt_input}")
-        
         response_code = self._prompt_router(prompt_input)
         
         if response_code == "1":
-            print("sent as general prompt")
             return self._general_prompt(prompt_input)
         
         elif response_code == "2":
-            print("sent as functional prompt")
             return self._function_prompt(prompt_input)
         
         else:
@@ -53,7 +52,7 @@ class AbbeyAI():
             temperature=0,
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line. And '1' if it's about casual talks, orgeneral questions codes or file that does not need a file accessing or calling any functions. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
+                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line, getting the copied text/code in the system. And '1' if it's about casual talks, orgeneral questions codes or file that does not need a file accessing or calling any functions. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
             ],
         )
         
@@ -122,7 +121,15 @@ class AbbeyAI():
                 "parameters": {
                     "type": "object",
                     "properties": {}
-                }
+                },
+            },
+            {
+                "name": "get_copied_text",
+                "description": "Get the copied text",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                },
             }
         ]
         
@@ -140,7 +147,8 @@ class AbbeyAI():
         if response_message.get("function_call"):
             
             available_fn = {
-                "clear_history": self.memory.clear
+                "clear_history": self.memory.clear,
+                "get_copied_text": get_copied_text
             }
             
             fn_name = response_message["function_call"]["name"]
@@ -159,7 +167,6 @@ class AbbeyAI():
                 stream=True
             )
             
-            
             return {
                 "stream": True,
                 "content": second_response
@@ -174,7 +181,6 @@ class AbbeyAI():
                 chunk_text = chunk["choices"][0]["delta"]["content"]
                 full_response += chunk_text
                 sentence += chunk_text
-                print(sentence)
                 match = re.search(pattern, sentence)
                 
                 if match:
@@ -206,3 +212,13 @@ class AbbeyAI():
             # Format input under system input
         # Function input
         # User input
+    
+    
+    def set_personality(self, text, override=False):
+        if override:
+            self.personality = text
+        else:
+            self.personality += text
+        
+    def set_name(self, name):
+        self.name = name
