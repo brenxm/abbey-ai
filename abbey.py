@@ -18,6 +18,7 @@ class AbbeyAI():
         self.audio_player = audio_player
         self.tts =  tts
         self.memory = AIMemory()
+        self.system_inputs = []
         self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
         
         
@@ -191,3 +192,17 @@ class AbbeyAI():
             tts_cb_fn(listen_audio_cb_fn)
         
         return full_response
+    
+    def compound_request(self):
+        # System input
+        messages = []
+        for system_input in self.system_inputs:
+            obj = {
+                "role": "system", "content": system_input
+            }
+            
+            messages.append(obj)
+            
+            # Format input under system input
+        # Function input
+        # User input
