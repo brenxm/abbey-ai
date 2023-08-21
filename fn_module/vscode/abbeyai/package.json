@@ -1,0 +1,53 @@
+{
+  "name": "abbeyai",
+  "displayName": "abbeyai",
+  "description": "VS code module for abbey ai",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [{
+      "command": "abbeyai.getFolder",
+      "title": "Get Folder Directory"
+    },
+  {
+    "command": "abbeyai.getItemPath",
+    "title": "Get Item Path"
+  },
+{
+  "command": "abbeyai.getHighlightedCode",
+  "title": "Get Highlighted Code"
+},
+{
+  "command": "abbeyai.getActiveCode",
+  "title": "Get Active Code"
+},{
+  "command": "abbeyai.getWorkspaceName",
+  "title": "Get Workspace name"
+}]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.81.0",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "20.2.5",
+    "eslint": "^8.41.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.3",
+    "@vscode/test-electron": "^2.3.2"
+  }
+}

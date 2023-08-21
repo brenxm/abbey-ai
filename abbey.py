@@ -22,7 +22,8 @@ class AbbeyAI():
         self.memory = AIMemory()
         self.personality = ""
         self.system_inputs = []
-        self.personality = "You are my AI assistant name Abbey or Abby. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'"
+        self.user_inputs = []
+        self.personality = ""
         
         
     def prompt(self, prompt_input):
@@ -199,7 +200,7 @@ class AbbeyAI():
         
         return full_response
     
-    def compound_request(self):
+    def compound_messages(self):
         # System input
         messages = []
         for system_input in self.system_inputs:
@@ -209,9 +210,21 @@ class AbbeyAI():
             
             messages.append(obj)
             
-            # Format input under system input
-        # Function input
+            # TODO: Format input under system input
+        
         # User input
+        for user_input in self.user_inputs:
+            obj = {
+                "role": "user", "content": user_input
+            }
+            
+            messages.append(obj)
+            
+        return messages
+    
+    
+    def compound_functions(self):
+        pass
     
     
     def set_personality(self, text, override=False):
@@ -222,3 +235,7 @@ class AbbeyAI():
         
     def set_name(self, name):
         self.name = name
+        
+    def set_system(self, text):
+        self.system_inputs.append(text)
+        

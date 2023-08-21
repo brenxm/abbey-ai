@@ -1,3 +1,4 @@
+from function_interface import FunctionsInterface
 from abbey import AbbeyAI
 from tts import TextToSpeech
 from stt import VoiceInput
@@ -5,10 +6,10 @@ from audioplayer import AudioPlayer
 from threading import Lock
 from PyQt6.QtCore import QThread
 from PyQt6.QtWidgets import QApplication
-import time
-import threading
 import subprocess
 from gui.blackboard import MainWindow
+import pygetwindow as gw
+import pyautogui
 
 input_type = "press_to_speak"  # press to speak or voice activated
 queue_lock = Lock()
@@ -19,10 +20,26 @@ audio_player = AudioPlayer(tts_queue)
 tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, None, audio_player, tts)
+fn_interface = FunctionsInterface()
 
 abbey.set_personality("You are my AI assistant name Abbey. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'")
 
 abbey.set_name("Abbey")
+
+
+def get_active_window_title():
+    window = gw.getWindowsWithTitle(pyautogui.getActiveWindow().title)
+    
+    if window:
+        return window[0].title.lower()
+    return None
+
+# Get window title and get necessary module
+window = get_active_window_title()
+
+if window:
+    if "visual studio code" in window:
+        fn_interface.load("vscode")
 
 
 def handle_prompt(text):
