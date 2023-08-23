@@ -22,7 +22,7 @@ voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 
-abbey.set_personality("You are my AI assistant name Abbey. You speak like a human being, an asshole, sassy, loofy but coherent, elaborates and straight to the point. Try to limit your response to few sentence as possible. You can also have the capabilities to access my personal data such as notes, reminders and task as well as my computer system. You can do task such as review code from VS code, make script, invoke a termnial prompt and etc. No need to end response with questions like 'If you need more questions, feel freet to ask.'")
+abbey.set_personality("You are my AI assistant named Abbey. You respond with direct to the point, elaborated but straight to point answer.")
 
 abbey.set_name("Abbey")
 
@@ -34,31 +34,43 @@ def get_active_window_title():
         return window[0].title.lower()
     return None
 
-# Get window title and get necessary module
-window = get_active_window_title()
 
-if window:
-    if "visual studio code" in window:
-        fn_interface.load("vscode")
+def handle_prompt(prompt_input):
+    
+    # Result 1 or 2
+    route_code = abbey.prompt_router(prompt_input)
 
-
-def handle_prompt(text):
-    result_obj = abbey.prompt(text) # returns a chunk or full response
+    if route_code == '1':
+        result_obj = abbey.general_prompt(prompt_input)
+        
+    elif route_code == '2':
+        window = get_active_window_title()
+        if "visual studio code" in window:
+            fn_interface.load('vscode')
+            
+        result_obj = abbey.function_prompt(prompt_input, fn_interface.functions)
+        print(result_obj)
+        
+    else:
+        print(route_code)
+        print('hallucinated response')
+        return
 
     if result_obj["stream"]:
         # Start convertion of the text generated from openai, arg is an audio player function
         
         print(result_obj)
         # Add to user's prompt to chat history
-        abbey.memory.add_chat_history("user", text)
         
+        abbey.memory.add_chat_history("user", prompt_input)
+        print(f'added users prompt input to history')
         # Full response message is returned after all chunks are read
         full_message = abbey.stream_result(result_obj["content"], tts.convert, audio_player.listen)
         
         # Add openai full response to chat history
         abbey.memory.add_chat_history("assistant", full_message)
         
-     
+        
     else:
         print("didn't get an object")
     return True

@@ -1,0 +1,78 @@
+[
+    {
+        "function_name": "notes_delete",
+        "description": "Delete a specific note",
+        "parameters": {
+            "note_title": {
+                "type": "string",
+                "description": "Title of the note to be deleted",
+                "required": true
+            }
+        }
+    },
+    {
+        "function_name": "notes_add",
+        "description": "Add a new note",
+        "parameters": {
+            "note_title": {
+                "type": "string",
+                "description": "Title of the new note",
+                "required": true
+            },
+            "note_content": {
+                "type": "string",
+                "description": "Content of the new note",
+                "required": true
+            }
+        }
+    },
+    {
+        "function_name": "notes_update",
+        "description": "Update a specific note",
+        "parameters": {
+            "note_title": {
+                "type": "string",
+                "description": "Title of the note to be updated",
+                "required": true
+            },
+            "new_note_content": {
+                "type": "string",
+                "description": "New content for the note",
+                "required": true
+            }
+        }
+    },
+    {
+        "function_name": "update_reminder",
+        "description": "Update the content of reminder",
+        "parameters": {
+            "content": {
+                "type": "string",
+                "description": "Content that will replace all reminder",
+                "required": true
+            }
+        }
+    },
+    {
+        "function_name": "terminal_invoke",
+        "description": "Invoke a terminal command",
+        "parameters": {
+            "expression": {
+                "type": "string",
+                "description": "Terminal expression to be executed",
+                "required": true
+            }
+        }
+    },
+    {
+        "function_name": "create_file",
+        "description": "Create a new file",
+        "parameters":{
+            "filename": {
+                "type": "string",
+                "description": "name of the new file with extension. e.g. newfile.py",
+                "required": true
+            }
+        }
+    }
+]

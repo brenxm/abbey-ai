@@ -1,10 +1,16 @@
+import pygetwindow as gw
+import pyautogui
 import win32file
 import pywintypes
+import re
 
 
 # Wait for the pipe to become available
-def request(requestType):
-    PIPE_NAME = f'\\.\pipe\{requestType}'
+def request(request_type):
+    window_title = gw.getWindowsWithTitle(pyautogui.getActiveWindow().title)
+    pipe_code_match = re.search(r'\s-\s(.*?)\s-\s', window_title[0].title)
+    
+    PIPE_NAME = f'\\\\.\\pipe\\{pipe_code_match.group(1)}'
     
     while True:
         try:
@@ -22,7 +28,7 @@ def request(requestType):
 
     # Connect and receive the message
 
-    message_to_send = b"getActiveCode"
+    message_to_send = request_type.encode('utf-8')
     win32file.WriteFile(handle, message_to_send)
 
     _, data = win32file.ReadFile(handle, 2000) # Read up to 64 bytes

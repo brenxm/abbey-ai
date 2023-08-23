@@ -1,21 +1,17 @@
 import pipe_connection
 
-def vscode_printer(text):
-    print(text)
-
-
 def export():
     return[
         {
-            "name": "vscode get code",
+            "name": "vscode_get_code",
             "fn": pipe_connection.request,
             "description": "Get data from VS code",
             "parameters": {
-                "requestType": {
+                "request_type": {
                     "type": "string",
-                    "enum": ["getFolder, getActiveCode, getHighlightedCode, getItemPath"]
-                }
+                    "enum": ["getFolder", "getActiveCode", "getHighlightedCode", "getItemPath"]
+                },
             },
-            "required_parameters": ["requestType"]
+            "required_parameters": ["request_type"]
         }
     ]

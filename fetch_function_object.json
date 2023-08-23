@@ -1,0 +1,43 @@
+[
+    {
+        "function_name": "get_file",
+        "function description": "Get a content of a file",
+        "parameters": [
+            {
+                "path": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Path of the file needed to extract."
+                }
+            }
+        ]
+    },
+    {
+        "function_name": "get_note",
+        "function description": "Get the content a specific note",
+        "parameters": [
+            {
+                "note_title": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Title of the note needed to open"
+                }
+            }
+        ]
+    },
+    {
+        "function_name": "get_vscode",
+        "function description": "Get codes and data from VS code",
+        "parameters": []
+    },
+    {
+        "function_name": "get_reminders",
+        "function description": "Get the list of reminders",
+        "parameters": []
+    },
+    {
+        "function_name": "get_notes_list",
+        "function description": "Get all the title of the notes",
+        "parameters": []
+    }
+]

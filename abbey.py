@@ -3,6 +3,7 @@ from dynamic_memory import AIMemory
 from audioplayer import AudioPlayer
 from dotenv import load_dotenv
 from tts import TextToSpeech
+import json
 import openai
 import os
 import re
@@ -25,35 +26,13 @@ class AbbeyAI():
         self.user_inputs = []
         self.personality = ""
         
-        
-    def prompt(self, prompt_input):
-        '''
-        Returns an object with properties
-        stream: bool - if this is a streamed response else a full response
-        content: chunk or full response - generated response from prompt call
-        '''
-        if not prompt_input:
-            return
-        
-        response_code = self._prompt_router(prompt_input)
-        
-        if response_code == "1":
-            return self._general_prompt(prompt_input)
-        
-        elif response_code == "2":
-            return self._function_prompt(prompt_input)
-        
-        else:
-            print('Response code error')
-    
-    
-    def _prompt_router(self, prompt):
+    def prompt_router(self, prompt):
         
         response = openai.ChatCompletion.create(
             temperature=0,
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line, getting the copied text/code in the system. And '1' if it's about casual talks, orgeneral questions codes or file that does not need a file accessing or calling any functions. Response should only be either '1' or '2'. And this is the prompt, '{prompt}'" }
+                {"role": "system", "content": f"respond with '2', if the prompt pertains about creating, deleting, reading, updating files such as notes, reminders, tasks, VS code, highlighted code in VS code, invoking command line, getting the copied text/code in the system. And '1' if it's about casual talks, orgeneral questions codes or file that does not need a file accessing or calling any functions. Response should only be either '1' or '2'. This is the chat history: {self.memory.chat_history}. And this is the new prompt: '{prompt}'" }
             ],
         )
         
@@ -62,7 +41,7 @@ class AbbeyAI():
         return response_code
             
             
-    def _general_prompt(self, prompt):
+    def general_prompt(self, prompt):
         '''
         Return the chunks of the stream
         '''
@@ -90,6 +69,16 @@ class AbbeyAI():
             }
         ]
         
+        with open('response_format.md', 'r') as f:
+            response_format = f.read()
+            
+        sys_format = {
+            "role": "system", 
+            "content": response_format
+        }
+        
+        
+        
         response = openai.ChatCompletion.create(
             messages=messages,
             functions=functions,
@@ -103,7 +92,7 @@ class AbbeyAI():
         }
         
             
-    def _function_prompt(self, prompt):
+    def function_prompt(self, prompt, fns_obj = []):
         '''
         Executes a function then return the full response
         '''
@@ -135,9 +124,9 @@ class AbbeyAI():
         ]
         
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages = messages,
-            functions = functions
+            functions = functions + fns_obj["functions"]
         )
         
         print(response)
@@ -147,23 +136,21 @@ class AbbeyAI():
         # Check wether response is a function call
         if response_message.get("function_call"):
             
-            available_fn = {
-                "clear_history": self.memory.clear,
-                "get_copied_text": get_copied_text
-            }
-            
+            fns_obj["reference_fn"]["clear_history"] = self.memory.clear
             fn_name = response_message["function_call"]["name"]
-            fn = available_fn[fn_name]
-            
+            fn = fns_obj["reference_fn"][fn_name]
+            fn_args = json.loads(response_message["function_call"]["arguments"])
+            print(len(fn_args))
             messages.append(response_message),
             messages.append({
                 "role": "function",
                 "name": fn_name,
-                "content": fn()
+                "content": fn(request_type=fn_args.get("request_type"))
             })
             
+            
             second_response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 messages = messages,
                 stream=True
             )
@@ -172,7 +159,7 @@ class AbbeyAI():
                 "stream": True,
                 "content": second_response
             }
-        
+    
     def stream_result(self, response, tts_cb_fn, listen_audio_cb_fn):
         sentence = ""
         full_response = ""
