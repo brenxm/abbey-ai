@@ -45,7 +45,7 @@ Content
                     'content': {
                         'function_name': 'get_reminders',
                     },
-                    'display': ['blackboard',]
+                    'display': ['blackboard']
                     'summary': 'These are your current reminders to check if you have anything going on.',
                     'action': []
                 }
@@ -63,7 +63,7 @@ Content
                         } 
                     },
                     'display': ['blackboard'],
-                    'summary': 'Your notes titled 'Car building' can be viewed on black board',
+                    'summary': 'Your notes titled 'Car building' can be viewed on blackboard',
                     'action': []
                 }
                 Explanation: The response to this ambiguous prompt employs a two-step approach using a chaining mechanism. Since the specific title isn't given, a get_notes_list function is used within the get_note function's arguments to identify all available note titles. The system analyzes these to pinpoint the one related to car building and return the right title.
