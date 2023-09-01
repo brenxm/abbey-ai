@@ -7,6 +7,7 @@ import json
 import openai
 import os
 import re
+import subprocess
 
 load_dotenv()
 
@@ -164,6 +165,7 @@ class AbbeyAI():
         sentence = ""
         full_response = ""
         pattern = r"[a-zA-Z][.?!]$"
+        code_pattern = r"```[python|csharp].+?```"
         for chunk in response:
             try:
                 chunk_text = chunk["choices"][0]["delta"]["content"]
@@ -171,10 +173,26 @@ class AbbeyAI():
                 sentence += chunk_text
                 match = re.search(pattern, sentence)
                 
-                if match:
-                    self.text_queue.append(sentence)
-                    tts_cb_fn(listen_audio_cb_fn)
-                    print(sentence)
+                code_blocks = []
+                
+                if '```python' in sentence:
+                    print('called opening format of python')
+                    if '\n```\n' in sentence:
+                        print('parsed a closing code format')
+                        code_pattern_match = re.search(code_pattern, sentence, re.DOTALL)
+                        parsed_string = code_pattern_match.group(0)
+                        sentence = sentence.replace(parsed_string, "")
+                        code_blocks.append(parsed_string)
+                        tts_cb_fn("__open_blackboard__", listen_audio_cb_fn)
+                        
+                        with open("gui/message_transfer.txt", "w") as f:
+                            f.write(parsed_string)
+                            
+                        
+                        
+                
+                if match and "```python" not in sentence:
+                    tts_cb_fn(sentence, listen_audio_cb_fn)
                     sentence = ""
             
             except:
@@ -182,8 +200,7 @@ class AbbeyAI():
                 
         # Ensure to send the last sentence to queue
         if sentence:
-            self.text_queue.append(sentence)
-            tts_cb_fn(listen_audio_cb_fn)
+            tts_cb_fn(sentence, listen_audio_cb_fn)
         
         return full_response
     

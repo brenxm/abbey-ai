@@ -1,9 +1,9 @@
 import sounddevice as sd
-import wavio
 from time import sleep
 import threading
 from scipy.io import wavfile
 import io
+import subprocess
 
 
 class AudioPlayer():
@@ -28,10 +28,18 @@ class AudioPlayer():
     def _start_player(self):
         self.is_playing = True
         audio_bytes = self.queue.pop(0)
-        rate, data = wavfile.read(io.BytesIO(audio_bytes))
-        # Play the WAV file using sounddevice
-        sd.play(data, rate)
-        sd.wait()  # Wait for the playback to finish
+        
+        if type(audio_bytes).__name__ == "bytes":
+            rate, data = wavfile.read(io.BytesIO(audio_bytes))
+            # Play the WAV file using sounddevice
+            sleep(0.15)
+            sd.play(data, rate)
+            sd.wait()  # Wait for the playback to finish
+            
+        
+        else:
+            subprocess.Popen(['python', 'gui/blackboard.py'], stdout=subprocess.PIPE)
+            
         
         if len(self.queue) > 0:
             self._start_player()

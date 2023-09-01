@@ -32,7 +32,8 @@ class TextToSpeech():
         
         self.is_converting = False
         
-    def convert(self, cb_play_audio):
+    def convert(self, text, cb_play_audio):
+        self.text_queue.append(text)
         if not self.is_converting:
             converting_thread = threading.Thread(target=self._converting, args=(cb_play_audio,))
             converting_thread.start()
@@ -40,21 +41,27 @@ class TextToSpeech():
     def _converting(self, cb_play_audio):
         self.is_converting = True
         text = self.text_queue.pop(0)
+        
+        if text == "__open_blackboard__":
+            self.audio_player.load_to_queue("__open_blackboard__")
+        
+        else:  
+            text = text.replace("`", "").replace("'", "").replace('"', "")
+
+            input_text = texttospeech.SynthesisInput(
+                text=text
+            )
             
-        input_text = texttospeech.SynthesisInput(
-            text=text
-        )
-        
-        response = self.client.synthesize_speech(
-            input=input_text,
-            voice=self.voice,
-            audio_config=self.audio_config
-        )
-        
-        
-        self.audio_player.load_to_queue(response.audio_content)
-        print('converted audio')
-        cb_play_audio()
+            response = self.client.synthesize_speech(
+                input=input_text,
+                voice=self.voice,
+                audio_config=self.audio_config
+            )
+            
+            
+            self.audio_player.load_to_queue(response.audio_content)
+            print('converted audio')
+            cb_play_audio()
         
         if len(self.text_queue) > 0:
             self._converting(cb_play_audio)

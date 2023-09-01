@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 const pipeServer = require("./pipe_connection")
 const vscode = require('vscode');
+const dirTree = require("directory-tree")
 
 
 // This method is called when your extension is activated
@@ -32,7 +33,6 @@ function activate(context) {
 		} else {
 			console.log("No workspace folder found!");
 		}
-
 	}))
 
 	disposable.push(
@@ -47,7 +47,6 @@ function activate(context) {
 			} else {
 				console.log('No active file.')
 			}
-
 		})
 	)
 
@@ -93,13 +92,69 @@ function activate(context) {
 		})
 	)
 
+	disposable.push(
+		vscode.commands.registerCommand('abbeyai.getData', function(){
+			let object = {
+				activeCode: "",
+				highlightedCode: "",
+				folderPath: "",
+				folderStructure: "",
+				activateCodePath: ""
+			}
+			
+
+			let workspaceFolders = vscode.workspace.workspaceFolders;
+			if (workspaceFolders && workspaceFolders.length > 0) {
+				let folderPath = workspaceFolders[0].uri.fsPath;
+				vscode.window.showInformationMessage(folderPath)
+				object.folderPath = folderPath
+			} else {
+				console.log("No workspace folder found!");
+			}
+
+		
+			let activeEditor = vscode.window.activeTextEditor;
+
+			if (activeEditor) {
+				let document = activeEditor.document;
+				let entireFileText = document.getText();
+				let selection = activeEditor.selection;
+				let selectedText = activeEditor.document.getText(selection)
+				let filePath = document.uri.fsPath;
+
+				object.activeCode = entireFileText
+				object.highlightedCode = selectedText
+				object.filePath = filePath
+				let tree = dirTree(object.folderPath, {exclude: [/.vscode$/, /__pycache__/, /.pytest_cache/, /node_modules/, /test/, /utils/, /.git/, /.svn/, /.hg/, /CVS/, /.DS_Store/, /Thumbs.db/]})
+
+				object.folderStructure = visualizeTree(tree)
+
+			} else {
+				console.log('no active editor')
+			}
+
+			return object
+		})
+	)
+
 	for(let i = 0; i < disposable.length; i++){
 		context.subscriptions.push(disposable[i]);
 	}
-
-
 }
 
+
+function visualizeTree(tree, prefix = '') {
+	let result = prefix + tree.name + '/\n';
+	if (tree.children) {
+		const len = tree.children.length;
+		tree.children.forEach((child, i) => {
+			const connector = i < len - 1 ? '├── ' : '└── ';
+			const nextPrefix = prefix + (i < len - 1 ? '│   ' : '    ');
+			result += prefix + connector + visualizeTree(child, nextPrefix);
+		});
+	}
+	return result;
+}
 
 // This method is called when your extension is deactivated
 function deactivate() {}

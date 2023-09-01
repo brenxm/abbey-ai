@@ -31,7 +31,7 @@ def request(request_type):
     message_to_send = request_type.encode('utf-8')
     win32file.WriteFile(handle, message_to_send)
 
-    _, data = win32file.ReadFile(handle, 2000) # Read up to 64 bytes
+    _, data = win32file.ReadFile(handle, 10000)
     win32file.CloseHandle(handle)
     
     return data.decode('utf-8')

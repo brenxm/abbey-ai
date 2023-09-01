@@ -1,118 +1,67 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QFrame, QPushButton, QVBoxLayout, QLabel, QSizePolicy, QHBoxLayout, QWidget, QTextEdit, QScrollArea
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QSize, pyqtSignal, QTimer
-from PyQt6.QtGui import QIcon, QKeyEvent, QTextDocument
 import sys
-
-
-class TextareaSubmitEvent(QTextEdit):
-    newMessageAdded = pyqtSignal()
-
-    def __init__(self, chatbox_layout, scroll_area):
-        super().__init__()
-        self.chatbox_layout = chatbox_layout
-        self.scroll_area = scroll_area
-
-    def keyPressEvent(self, event: QKeyEvent):
-        if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
-            text = self.toPlainText()
-            available_width = self.chatbox_layout.parentWidget().parentWidget().width() - 20
-            label = ChatBubble(text, available_width)
-            self.chatbox_layout.addWidget(label)
-            self.clear()
-            self.newMessageAdded.emit()
-        else:
-            super().keyPressEvent(event)
-
-
-
-class ChatBubble(QLabel):
-    def __init__(self, text, available_width):
-        super().__init__()
-        self.padding = 10
-        self.text_content = text
-        self.setWordWrap(True)
-        self.setText(text)
-        self.setStyleSheet(f"margin: 5px; padding: {self.padding}px; border-radius: 7px; background-color: rgb(40, 40, 40);")
-        self.resizeForText(available_width)
-
-    def resizeForText(self, available_width):
-        text_document = QTextDocument()
-        text_document.setDefaultFont(self.font())
-        text_document.setHtml(self.text_content)
-        text_document.setTextWidth(available_width - 2 * self.padding)
-        new_height = text_document.size().height() + 2 * self.padding
-        self.setFixedHeight(int(new_height))
-
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QSizePolicy
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPalette, QColor
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.frame = QFrame(self)
-        self.frame.setStyleSheet("background-color: rgb(50, 50, 50)")
+        # Set the window size and position
+        self.setFixedSize(600, 900)
+        screen_geometry = QApplication.primaryScreen().geometry()
+        self.move(screen_geometry.width() - self.width(), 0)
+
+        # Create a central widget and layout
+        central_widget = QWidget()
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        padding = 20
+        layout.setContentsMargins(padding, padding, padding, padding)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
-        # Response Layout
-        response_layout = QVBoxLayout()
-        response_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        response_container = QWidget()
-        response_container.setLayout(response_layout)
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(response_container)
-        layout.addWidget(self.scroll_area, stretch=1)
+        # Set background color for the main layout and title bar
+        main_color = "#333333"
+        central_widget.setStyleSheet(f"background-color: {main_color};")
+        palette = QPalette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(main_color))
+        self.setPalette(palette)
 
-        # Input Layout
-        input_layout_bg = QWidget()
-        input_layout_bg.setStyleSheet("background-color: rgb(70, 70, 70); border-radius: 7.5px")
-        input_layout_bg.setFixedHeight(50)
-        textarea = TextareaSubmitEvent(response_layout, self.scroll_area)
-        textarea.newMessageAdded.connect(self.scrollToBottom)
-        textarea.setFixedHeight(50)
-        send_btn = QPushButton()
-        icon = QIcon("gui/send_btn.png")
-        send_btn.setIcon(icon)
-        send_btn.setIconSize(QSize(25, 25))
-        send_btn.setStyleSheet("padding: 15px")
+        # Read the text file content
+        try:
+            with open('gui/message_transfer.txt', 'r') as file:
+                text = file.read()
+        except FileNotFoundError:
+            text = "File not found"
 
-        component_input_layout = QHBoxLayout()
-        component_input_layout.addWidget(textarea)
-        component_input_layout.addWidget(send_btn)
-        input_layout_bg.setLayout(component_input_layout)
-        layout.addWidget(input_layout_bg, stretch=0)
-
-        self.frame.setLayout(layout)
-        self.setCentralWidget(self.frame)
-        self.setupWindowAnimation()
-
-    def setupWindowAnimation(self):
-        screen_size = self.screen().size()
-        self.width = 600
-        self.height = screen_size.height()
-
-        self.animation = QPropertyAnimation(self, b"geometry")
-        self.animation.setDuration(300)
-        self.animation.setStartValue(QRect(screen_size.width(), 0, self.width, self.height - 500))
-        self.animation.setEndValue(QRect(screen_size.width() - self.width, 0, self.width, self.height - 500))
-        self.animation.start()
-
-    def minimize(self):
-        screen_size = self.screen().size()
-
-        # Reverse animation for minimizing
-        self.animation.setStartValue(QRect(screen_size.width() - self.width, 0, self.width, self.height))
-        self.animation.setEndValue(QRect(screen_size.width(), 0, self.width, self.height))
-        self.animation.finished.connect(self.hide)
-        self.animation.start()
+        # Create a QLabel element with the text
+        label = QLabel(text)
         
-    def scrollToBottom(self):
-        QTimer.singleShot(50, lambda: self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum()))
+        try:
+            with open('gui/message_transfer.txt', 'w') as file:
+                file.write("")
+        except FileNotFoundError:
+            text = "File not found"
+        label.setWordWrap(True)
+        label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        label.setStyleSheet("""
+            QLabel {
+                background-color: #222222;
+                color: #FFFFFF;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
+
+        # Add QLabel to the layout
+        layout.addWidget(label)
+
+        # Show the window
+        self.show()
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
+app = QApplication(sys.argv)
+window = MainWindow()
+sys.exit(app.exec())
 
-    window = MainWindow()
-    window.show()
-
-    sys.exit(app.exec())

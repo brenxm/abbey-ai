@@ -16,7 +16,7 @@ async function createPipeServer() {
                 try {
                     let result = await vscode.commands.executeCommand("abbeyai." + data);
                     resolve(result.toString()); // Resolve the Promise with the result
-                    client.write(result.toString())
+                    client.write(JSON.stringify(result))
 
                 } catch (error) {
                     console.log(error);

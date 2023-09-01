@@ -38,7 +38,6 @@ class VoiceInput():
                 # Wait until the audio player and tts is completed
                 while  self.audio_player.is_playing or len(self.audio_player.queue) > 0:
                     time.sleep(0.3)
-                    print('still waiting')
                 self._init_keyboard_listeners()
                 
             time.sleep(0.3)
