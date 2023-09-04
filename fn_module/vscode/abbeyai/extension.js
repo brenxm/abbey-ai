@@ -99,7 +99,7 @@ function activate(context) {
 				highlightedCode: "",
 				folderPath: "",
 				folderStructure: "",
-				activateCodePath: ""
+				filePath: ""
 			}
 			
 

@@ -1,52 +1,40 @@
-from fn_module.vscode.vscode_module import get_vscode
+from fn_module.vscode.vscode_module import get_vscode, write_vscode
 from types import FunctionType, MethodType
 import re
 import types
 
 
 keyword_objects = [
-    {
+     {
         "keywords": ['active code', 'current code', 'get active code'],
         "type": "keyword_replace",
-        "args": {
-            "function_method": "getActiveCode",
+        "prior_fn_args": {
+            "get": "activeCode",
             "label": "code"
         },
-        "function": get_vscode,
-        "response_fn": []
+        "prior_function": get_vscode,
     },
     {
         "keywords": ["highlighted code"],
         "type": "keyword_replace",
-        "args": {
-            "function_method": "getHighlightedCode",
-            "label": "code"
+        "prior_fn_args": {
+            "get_method": "highlightedCode",
+            "label": "highlighted code"
         },
-        "function": get_vscode,
-        "response_fn": []
+        "prior_function": get_vscode,
+        "post_fn_args": {},
+        "post_function": write_vscode
     },
     {
         "keywords": ["vscode folder path"],
         "type": "keyword_replace",
-        "args": {
-            "function_method": "getFolder",
+        "prior_fn_args": {
+            "get_method": "folderPath",
             "label": "vscode folder path"
         },
-        "function": get_vscode,
-        "response_fn": []
-    },
+        "prior_function": get_vscode,
+    }
     ]
-
-
-# Schema of keyword object
-schema_example = {
-    "keywords": [], # list of keywords (strings)
-    "type": "keyword_replace", # Enum("keyword_replace", "function_call")
-    "label": "code", # label used for keyword_replace,
-    "function_method": "getActiveCode", # Argument to a replacer type keyword object, created function must conform to a single argument input function or none
-    "function": None # Actual function of needed to be called
-}
-
 
 class KeywordParser():
     def __init__(self):
@@ -90,26 +78,33 @@ class KeywordParser():
         
         response = {
             "prompt_input": prompt_input,
+            "args": {},
             "functions": []
         }
                         
             # Execute prior request functions and append post request functions
         for index, obj in enumerate(keyword_objects):
             if obj["type"] == "keyword_replace":
-                replaced_input = prompt_input.replace(parsed_keywords[index], obj["function"](obj["args"]))
-                response["prompt_input"] = replaced_input
+                response_obj = obj["prior_function"](obj["prior_fn_args"])
+                print(f"{prompt_input}")
+                replace_input = prompt_input.replace(parsed_keywords[index], response_obj["prompt"])
+                response["prompt_input"] = replace_input
+                
+                if response_obj["filePath"]:
+                    response["args"]["file_path"] = response_obj["filePath"]
+                
         
             elif obj["type"] == "function_call":
-                obj["function"](obj["args"])
+                obj["prior_function"](obj["prior_fn_args"])
                 
             try:
-                response["functions"] += obj["response_fn"]
-                print("Appended blackboard function to response object")
+                response["functions"].append(obj["post_function"])
+                    
             except:
                 pass
                 
-        print(f"this is the response: {response}")
-
+        print(response["args"])
+        
         # Clean the keyword_objects
         return response
         
@@ -122,32 +117,61 @@ class KeywordParser():
         # Accept an object, validate if it conform to valid schema
         def validate_obj(obj):
             valid_properties = {
-                "keywords": [list, re.Pattern],
-                "type": ["keyword_replace", "function_call"],
-                "args": [dict, None, str],
-                "function": [FunctionType, MethodType],
-                "response_fn": list
+                "keywords": {
+                    "data_types": [list, re.Pattern],
+                    "required": True
+                             },
+                "type": {
+                    "data_types": ["keyword_replace", "function_call"],
+                    "required": True
+                        },
+                "prior_fn_args": {
+                    "data_types": [dict, None, str],
+                    "required": False
+                        },
+                "prior_function": {
+                    "data_types": [FunctionType, MethodType],
+                    "required": False,
+                        },
+                "post_fn_args": {
+                   "data_types": [dict, None, str],
+                   "required": False
+                        },
+                "post_function": {
+                    "data_types": [FunctionType, MethodType],
+                    "required": False
+                        }
             }
-             
             for property, valid_type in valid_properties.items():
-                if property not in obj:
-                    raise ValueError(f"'{property}' not found in the object.")
-                        
-                if isinstance(valid_type, list):  # Check against a list of allowed values/types
-                    types_list = [t for t in valid_type if isinstance(t, type)]
-                    values_list = [v for v in valid_type if not isinstance(v, type)]
+                if valid_properties[property]["required"]:
+                    if property not in obj:
+                        raise ValueError(f"'{property}' not found in the object.")
+                
+                
+                print(valid_type)
+                valid_data_types = valid_type["data_types"]
+                if isinstance(valid_data_types, list):  # Check against a list of allowed values/types
+                    types_list = [t for t in valid_type["data_types"] if isinstance(t, type)]
+                    values_list = [v for v in valid_type["data_types"] if not isinstance(v, type)]
                     
                     # Check if it matches any of the types
-                    if any(isinstance(obj[property], t) for t in types_list):
-                        continue
+                    
+                    # If property not existing and is not required -> continue
+                    try:
+                        if any(isinstance(obj[property], t) for t in types_list):
+                            continue
+                            
+                        # Check if it matches any of the allowed values
+                        if obj[property] in values_list:
+                            continue
                         
-                    # Check if it matches any of the allowed values
-                    if obj[property] in values_list:
-                        continue
+                    except:
+                        if not valid_properties[property]["required"]:
+                            continue
                         
                     raise ValueError(f"'{property}' does not match the expected type or value.")
                 else:  # Directly check against a type
-                    if not isinstance(obj[property], valid_type):
+                    if not isinstance(obj[property], valid_type["data_types"]):
                         raise ValueError(f"'{property}' does not match the expected type.")
         
         if isinstance(obj, (dict)):
@@ -157,10 +181,4 @@ class KeywordParser():
         elif isinstance(obj, (list)):
             for item in obj:
                 validate_obj(item)
-                self.keyword_objects.append(item)
-
-"""                
-parser = KeywordParser()
-parser.add_object(keyword_objects)
-parser.parse("With this vscode folder path, add a new item called python.exe")
-"""
+                self.keyword_objects.append(item) 

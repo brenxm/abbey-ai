@@ -16,7 +16,6 @@ class PromptRequest():
     
     def prompt(self, prompt):
         
-        print(f"requests messages: {len(self.messages)} ")
         self.messages.append(
             {
                 "role": "user", 
@@ -24,6 +23,8 @@ class PromptRequest():
             }
         )
         
+        pretty_messages = json.dumps(self.messages, indent = 4)
+        print(pretty_messages)
         response = openai.ChatCompletion.create(
             model='gpt-4',
             messages = self.messages,
@@ -34,7 +35,7 @@ class PromptRequest():
         return response
     
     def add_message(self, prompt_msg_obj):
-        print('displayed')
+        print(f'added:{prompt_msg_obj}')
         self.messages.append(prompt_msg_obj)
         
     def clear_message(self):

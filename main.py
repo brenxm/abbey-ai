@@ -41,12 +41,24 @@ keyword_parser.add_object(
         {
         "keywords": re.compile(r'(?i)(display|show|present|reveal|exhibit|demonstrate|bring\s+up|put\s+up|project|illustrate|highlight|flash|render|visualize).*?blackboard'),
         "type": "function_call",
-        "args": {
+        "prior_fn_args": {
             "role": "system",
             "content": "Format your response to !!!blackboard-start!!!<content>!!!blackboard-end!!! to display it on blackboard where the content is the string to be displayed. e.g. !!!blackboard-start!!!200 / 2 = 100!!!blackboard-end!!!, the content is 200 / 2 = 100."
         },
-        "function": request.add_message,
-        "response_fn": [display_blackboard]
+        "prior_function": request.add_message,
+    }
+)
+
+keyword_parser.add_object(
+    {
+        "keywords": ["clear our chat history", "clear the chat history"],
+        "type": "function_call",
+        "prior_fn_args": {
+            "role": "system",
+            "content": "Send confirmation to the user that you just deleted the Chat history"
+        },
+        "prior_function": request.add_message,
+        "post_function": memory.clear
     }
 )
 
@@ -77,7 +89,7 @@ def handle_prompt_test(prompt_input):
      # Add tone to system prompt
     laconic_prompt = {
         "role": "system",
-        "content": "You are an assistant. You answer with brief, straight to the point response but covers all possible bases, succint, laconic and concise. Explain by conversation, not by list of items. Few subject at a time."}
+        "content": "You are an assistant. You answer with brief, laconic, succint and concise responses. Explain by conversation, not by list of items. Few subject at a time."}
     
     # Get memory data and include to new prompt
     memory_data = '\n'.join(memory.chat_history)
@@ -91,6 +103,9 @@ def handle_prompt_test(prompt_input):
     
     
     response_obj = keyword_parser.parse(prompt_input)
+    
+    
+    
     
     memory.add_chat_history("user", response_obj["prompt_input"])
     
@@ -164,14 +179,14 @@ def handle_prompt_test(prompt_input):
     # Add response of assistant to memory
     memory.add_chat_history('assistant', full_message)
     
+    print(response_obj)
     # Execute post response functions
     while len(response_obj["functions"]) > 0:
         fn = response_obj["functions"].pop(0)
-        fn(full_message)
-        
-    
-    
-  
+        if response_obj["args"]:
+            fn(response_obj["args"])
+        else:
+            fn()
     
 
 def handle_prompt(prompt_input):
