@@ -1,44 +1,12 @@
-from fn_module.vscode.vscode_module import get_vscode, write_vscode
 from types import FunctionType, MethodType
+import json
 import re
 import types
 
-
-keyword_objects = [
-     {
-        "keywords": ['active code', 'current code', 'get active code'],
-        "type": "keyword_replace",
-        "prior_fn_args": {
-            "get": "activeCode",
-            "label": "code"
-        },
-        "prior_function": get_vscode,
-    },
-    {
-        "keywords": ["highlighted code"],
-        "type": "keyword_replace",
-        "prior_fn_args": {
-            "get_method": "highlightedCode",
-            "label": "highlighted code"
-        },
-        "prior_function": get_vscode,
-        "post_fn_args": {},
-        "post_function": write_vscode
-    },
-    {
-        "keywords": ["vscode folder path"],
-        "type": "keyword_replace",
-        "prior_fn_args": {
-            "get_method": "folderPath",
-            "label": "vscode folder path"
-        },
-        "prior_function": get_vscode,
-    }
-    ]
-
 class KeywordParser():
     def __init__(self):
-        self.keyword_objects = keyword_objects
+        self.keyword_objects = []
+        self.prompt_input = ""
         
     def parse(self, prompt_input):
         # Getting and setting up all available keywords
@@ -52,8 +20,6 @@ class KeywordParser():
             elif isinstance(obj["keywords"], list):
                 keywords += obj["keywords"]
             
-
-        print(f"these are the count of objects: {len(self.keyword_objects)} and these are the generated keywords {keywords}")
         
         # Match keywords with prompt input
         parsed_keywords = []
@@ -67,48 +33,28 @@ class KeywordParser():
             for keyword in parsed_keywords:
                 if isinstance(obj["keywords"], list):
                     if keyword in obj["keywords"]:
-                        keyword_objects.append(self.keyword_objects[index])
+                        parsed_obj = self.keyword_objects[index]
+                        parsed_obj["keyword_used"] = keyword
+                        keyword_objects.append(parsed_obj)
                 
                 elif isinstance(obj["keywords"], re.Pattern):
                     match_keyword = re.search(obj["keywords"], keyword)
                     if match_keyword:
-                        keyword_objects.append(self.keyword_objects[index])
+                        parsed_obj = self.keyword_objects[index]
+                        parsed_obj["keyword_used"] = keyword
+                        keyword_objects.append(parsed_obj)
                     
-                    
-        
         response = {
             "prompt_input": prompt_input,
-            "args": {},
-            "functions": []
+            "function_objs": keyword_objects
         }
                         
             # Execute prior request functions and append post request functions
-        for index, obj in enumerate(keyword_objects):
-            if obj["type"] == "keyword_replace":
-                response_obj = obj["prior_function"](obj["prior_fn_args"])
-                print(f"{prompt_input}")
-                replace_input = prompt_input.replace(parsed_keywords[index], response_obj["prompt"])
-                response["prompt_input"] = replace_input
-                
-                if response_obj["filePath"]:
-                    response["args"]["file_path"] = response_obj["filePath"]
-                
         
-            elif obj["type"] == "function_call":
-                obj["prior_function"](obj["prior_fn_args"])
-                
-            try:
-                response["functions"].append(obj["post_function"])
-                    
-            except:
-                pass
-                
-        print(response["args"])
-        
+       
+          
         # Clean the keyword_objects
         return response
-        
-        
         
     def add_object(self, obj):
         if not isinstance(obj, (dict, list)):
@@ -142,13 +88,12 @@ class KeywordParser():
                     "required": False
                         }
             }
+            
             for property, valid_type in valid_properties.items():
                 if valid_properties[property]["required"]:
                     if property not in obj:
                         raise ValueError(f"'{property}' not found in the object.")
                 
-                
-                print(valid_type)
                 valid_data_types = valid_type["data_types"]
                 if isinstance(valid_data_types, list):  # Check against a list of allowed values/types
                     types_list = [t for t in valid_type["data_types"] if isinstance(t, type)]
@@ -175,10 +120,8 @@ class KeywordParser():
                         raise ValueError(f"'{property}' does not match the expected type.")
         
         if isinstance(obj, (dict)):
-            validate_obj(obj)
             self.keyword_objects.append(obj)
             
         elif isinstance(obj, (list)):
             for item in obj:
-                validate_obj(item)
                 self.keyword_objects.append(item) 

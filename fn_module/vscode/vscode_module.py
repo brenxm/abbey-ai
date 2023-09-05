@@ -10,9 +10,14 @@ def get_vscode(content_obj):
 
     data = json.loads(request("getData"))
     
+    new_string = f"{content_obj['label']}:{data[content_obj['get_method']]}"
+    keyword_used = content_obj["keyword_obj"]["keyword_used"]
+    new_prompt = content_obj["prompt"].replace(keyword_used, new_string)
+    
+    print(data)
     result_obj = {
         "filePath": data["filePath"],
-        "prompt": f"{content_obj['label']}:{data[content_obj['get_method']]}"
+        "prompt": new_prompt
     }
     
     return result_obj
