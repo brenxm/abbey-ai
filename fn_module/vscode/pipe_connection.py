@@ -25,13 +25,14 @@ def request(request_type):
             if e.args[0] == 2: # File not found error
                 continue
             raise
-
+        
     # Connect and receive the message
 
     message_to_send = request_type.encode('utf-8')
     win32file.WriteFile(handle, message_to_send)
 
-    _, data = win32file.ReadFile(handle, 10000)
+    _, data = win32file.ReadFile(handle, 100000)
     win32file.CloseHandle(handle)
+    print('Received data from VSCODE')
     
     return data.decode('utf-8')

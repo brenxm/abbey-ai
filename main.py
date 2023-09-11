@@ -15,12 +15,9 @@ from keyword_parser import KeywordParser
 from fn_module.vscode.vscode_module import get_vscode, write_vscode
 import re
 import datetime
+from function_map import FunctionMap
+from response_streamer import ResponseStreamer
 
-# Handle logic flow data schema
-prompt_mem = {
-    "prompt": "",
-    "functions": []
-}
 queue_lock = Lock()
 audio_queue = []
 tts_queue = []
@@ -33,7 +30,7 @@ def display_blackboard(response):
     if match:
         #print(f"displayed to blackboard: {match.group()}")
         pass
-    
+
 
 memory = AIMemory()
 audio_player = AudioPlayer(tts_queue)
@@ -43,6 +40,18 @@ abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
 keyword_parser = KeywordParser()
+
+function_map = FunctionMap()
+function_map.add_function([
+        {
+            "name": "request.add_message",
+            "function": request.add_message
+        },
+        {
+            "name": "memory.clear",
+            "function": memory.clear
+        }
+    ])
 
 
 abbey.set_personality("You are my AI assistant named Abbey. You respond with direct to the point, elaborated but straight to point answer. Address me as 'boss' or 'sir' without comma ',' similar to Tony Stark's personal AI named Jarvis.")
@@ -69,8 +78,6 @@ def handle_prompt_test(prompt_input):
     
     date = datetime.datetime.now()
     
-    prompt_mem["prompt"] = prompt_input
-    
     request.clear_message()
     
     request.add_message({
@@ -96,119 +103,102 @@ def handle_prompt_test(prompt_input):
     response_obj = keyword_parser.parse(prompt_input)
     
     
-    
     # Call all prior_functions in response_obj
-    for k_obj in response_obj["function_objs"]:
+    for index, k_obj in enumerate(response_obj["function_objs"]):
         if 'prior_function' in k_obj:
-            while len(k_obj['prior_function']) > 0:
-                fn_ar = k_obj['prior_function'].pop(0)
-                fn = fn_ar["function"]
-                arg = fn_ar["arg"]
+            for prior_fn in k_obj["prior_function"]:
+                fn_name = prior_fn["name"]
+                arg = prior_fn["arg"]
                 arg["prompt"] = prompt_input
                 arg["keyword_obj"] = k_obj
+                fn = function_map.get_function(fn_name)
                 fn_response = fn(arg)
                 
                 try:
                     response_obj['prompt_input'] = fn_response["prompt"]
                 except:
                     pass
+                
+                # Append wrapper parsers
+                try:
+                    if "wrapper_parsers" in response_obj:
+                        response_obj["wrapper_parsers"] += fn_response["wrapper_parsers"]
+                        
+                    else:
+                        response_obj["wrapper_parsers"] = fn_response["wrapper_parsers"]
+                except:
+                    pass
+                    
+                
+                # Call additional prior function using the property 'fn_call'
+                try:
+                    if 'fn_call' in fn_response:
+                        fn_name = fn_response["fn_call"]["name"]
+                        
+                        for fn_obj in function_map.functions:
+                            if fn_name == fn_obj["name"]:
+                                fn = fn_obj["function"]
+                                arg = fn_response["fn_call"]["arg"]
+                                
+                                fn(arg)
+                                print("SUCCESFULLY ADDED ANOTHER SYSTEM PROMPT")
+                except:
+                    pass
+                            
+                # Add additional post function with property 'post_functions'
+                try:
+                    if 'post_functions' in fn_response:
+                        if 'post_function' not in response_obj["function_objs"][index]:
+                            response_obj["function_objs"][index]["post_function"] = []
+                            
+                        response_obj["function_objs"][index]["post_function"] += fn_response["post_functions"]
+                except Exception as e:
+                    print(e)
+           
+                    
             
     # Sends OPENAI API request and result is assigned to response
-    print(response_obj['prompt_input'])
     response = request.prompt(response_obj["prompt_input"])
     
     memory.add_chat_history("user", response_obj["prompt_input"])
     
     
     sentence_pattern = r'[\D]{2,}[!\.\?](?<!\!)'
-    blackboard_pattern = {
-        "opening_tag": r'!!!blackboard-start!!!',
-        "closing_tag": r'!!!blackboard-end!!!'
-    }
     
-    full_message = ""
-    sentence = ""
-    stream_function = False
-    blackboard_data = ""
+    wrapper_parsers = response_obj["wrapper_parsers"] if "wrapper_parsers" in response_obj else []
     
-    for chunk in response:
-        try:
-            chunk = chunk['choices'][0]['delta']['content']
-            #print(chunk)
-            sentence += chunk
-            full_message += chunk
-            
-            sentence_match = re.search(sentence_pattern, sentence)
-            blackboard_match = re.search(blackboard_pattern["opening_tag"], sentence)
-            
-            if stream_function:
-                blackboard_data += chunk
-                sentence = ""
-                closing_tag_match = re.search(blackboard_pattern["closing_tag"], blackboard_data, re.DOTALL)
-                
-                print(blackboard_data)
-                if closing_tag_match:
-                    stream_function = False
-                    split_string = blackboard_data.split("!!!blackboard-end!!!")
-                    
-                    sentence += split_string[1]
-                    
-                    continue
-                
-            
-            elif blackboard_match:
-               stream_function = True
-               unsliced_string = blackboard_match.group(0)
-               
-               # index 0 will be sent to the converter, and 1 will be sent to blackboard data if not empty
-               string_list = unsliced_string.split("!!!blackboard-start!!!")
-               sentence = sentence.replace("!!!blackboard-start!!!", "")
-               sentence += string_list[0]
-               
-               tts.convert(sentence, audio_player.listen)
-               sentence = ""
-               blackboard_data += string_list[1]
-               
-            elif sentence_match:
-                tts.convert(sentence, audio_player.listen)
-                sentence = ""
-           
-        except:
-            
-            if sentence:
-                tts.convert(sentence, audio_player.listen)
-                sentence = ""
+    streamer = ResponseStreamer(wrapper_parsers, response, tts, audio_player, sentence_pattern)
     
-    # Stream and return full message
-    #full_message = abbey.stream_result(response, tts.convert, audio_player.listen)
+    full_message = streamer.start()
     
-    # Add response of assistant to memory
+    
     memory.add_chat_history('assistant', full_message)
     
     # Execute post response functions
     for fn_obj in response_obj["function_objs"]:
         if 'post_function' in fn_obj:
-            while len(fn_obj['post_function']) > 0:
+            for p_fn in fn_obj["post_function"]:
+                if type(p_fn["name"]) == str:
+                    fn_name = p_fn["name"]
+                    fn = function_map.get_function(fn_name)
+                else:
+                    fn = p_fn["name"]
                 
-                fn_ar = fn_obj['post_function'].pop(0)
-                
-                fn = fn_ar["function"]
-                
-                if 'keyword_obj' not in arg:
-                    arg["keyword_obj"] = fn_obj
-            
-                if 'arg' in fn_ar:
-                    arg = fn_ar["arg"]
+                try:
+                    print('called function')
+                    arg = p_fn["arg"]
+                    arg["prompt"] = full_message
                     fn(arg)
                     
-                else:
+                except Exception as e:
+                    print(f"ERROR FOUND: {e}")
                     fn()
-            
+                
+    
 # keyword_object initiation:
 keyword_parser.add_object([
     {
         "keywords": re.compile(r'(?i)(display|show|present|reveal|exhibit|demonstrate|bring\s+up|put\s+up|project|illustrate|highlight|flash|render|visualize).*?blackboard'),
-        "type": "function_call",
         "prior_function": [
             {
                 "function": request.add_message,
@@ -221,28 +211,26 @@ keyword_parser.add_object([
     },
     {
         "keywords": ['active code', 'current code', 'get active code'],
-        "type": "keyword_replace",
         "prior_function": [
             {
+                "name": "get_vscode",
                 "function": get_vscode,
                 "arg": {
                         "get_method": "activeCode",
-                        "label": "code",
-                        "prompt": prompt_mem["prompt"]
+                        "label": "code"
                     }
             }
         ]
     },
     {
         "keywords": ["highlighted code"],
-        "type": "keyword_replace",
         "prior_function": [
             {
+                "name": "get_vscode",
                 "function": get_vscode,
                 "arg": {
                     "get_method": "highlightedCode",
-                    "label": "highlighted code",
-                    "prompt": prompt_mem["prompt"]
+                    "label": "highlighted code"
                 }
             }
         ],
@@ -250,24 +238,22 @@ keyword_parser.add_object([
     },
     {
         "keywords": ["vscode folder path", "VS Code folder path"],
-        "type": "keyword_replace",
         "prior_function": [
             {
+                "name": "get_vscode",
                 "function": get_vscode,
                 "arg": {
                     "get_method": "folderPath",
                     "label": "vscode folder path",
-                    "prompt": prompt_mem["prompt"]
-
                 }
             }
         ]
     },
     {
         "keywords": re.compile(r'\b(clear|delete)\b(?:\s*\bour\b)?\s*\bchat history\b', re.IGNORECASE),
-        "type": "function_call",
         "prior_function": [
             {
+                "name": "request.add_message",
                 "function": request.add_message,
                 "arg": {
                     "role": "system",
@@ -275,7 +261,23 @@ keyword_parser.add_object([
                 }
             }
         ],
-        "post_function": [{"function": memory.clear}]
+        "post_function": [{
+            "name": 'memory.clear',
+            "function": memory.clear,
+            }]
+    },
+    {
+        "keywords": ["VS Code folder structure"],
+        "prior_function": [
+            {
+                "name": "get_vscode",
+                "function": get_vscode,
+                "arg": {
+                    "get_method": "folderStructure",
+                    "label": "project folder structure",
+                }
+            }
+        ]
     }
 ]
 )

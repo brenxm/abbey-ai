@@ -20,7 +20,7 @@ class KeywordParser():
             elif isinstance(obj["keywords"], list):
                 keywords += obj["keywords"]
             
-        
+        print(f"THIS ARE THE KEYWORDS {' '.join(keywords)}")
         # Match keywords with prompt input
         parsed_keywords = []
         for keyword in keywords:
@@ -44,6 +44,7 @@ class KeywordParser():
                         parsed_obj["keyword_used"] = keyword
                         keyword_objects.append(parsed_obj)
                     
+        print(f"THIS ARE THE KEYWORD OBJECTS:{len(keyword_objects)}")
         response = {
             "prompt_input": prompt_input,
             "function_objs": keyword_objects
@@ -52,7 +53,7 @@ class KeywordParser():
             # Execute prior request functions and append post request functions
         
        
-          
+        print(response)
         # Clean the keyword_objects
         return response
         
@@ -124,4 +125,7 @@ class KeywordParser():
             
         elif isinstance(obj, (list)):
             for item in obj:
-                self.keyword_objects.append(item) 
+                self.keyword_objects.append(item)
+    
+    
+        

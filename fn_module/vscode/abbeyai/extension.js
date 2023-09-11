@@ -122,6 +122,8 @@ function activate(context) {
 				let selectedText = activeEditor.document.getText(selection)
 				let filePath = document.uri.fsPath;
 
+				object.highlightedCodeStartLine = selection.start.line
+				object.highlightedCodeEndLine = selection.end.line
 				object.activeCode = entireFileText
 				object.highlightedCode = selectedText
 				object.filePath = filePath

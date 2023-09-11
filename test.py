@@ -32,8 +32,6 @@ class PromptRequest():
         return response
     
     def add_message(self, prompt_msg_obj):
-        print(f'added:{prompt_msg_obj}')
-        
         system_prompt = {
             "role": prompt_msg_obj["role"],
             "content": prompt_msg_obj["content"]

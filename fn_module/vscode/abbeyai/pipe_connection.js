@@ -33,12 +33,14 @@ async function createPipeServer() {
         });
     });
 
+    /*
     // Make sure the pipe doesn't already exist
     try {
         fs.unlinkSync(PIPE_NAME);
     } catch (e) {
         // Ignore if the file does not exist
     }
+    */
 
     server.listen(PIPE_NAME, () => {
         console.log('Server listening on', PIPE_NAME);

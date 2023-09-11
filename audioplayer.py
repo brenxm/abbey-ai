@@ -5,7 +5,6 @@ from scipy.io import wavfile
 import io
 import subprocess
 
-
 class AudioPlayer():
     def __init__(self, tts_queue):
         self.is_playing = False
@@ -32,11 +31,11 @@ class AudioPlayer():
         if type(audio_bytes).__name__ == "bytes":
             rate, data = wavfile.read(io.BytesIO(audio_bytes))
             # Play the WAV file using sounddevice
+       
             sleep(0.15)
             sd.play(data, rate)
             sd.wait()  # Wait for the playback to finish
             
-        
         else:
             subprocess.Popen(['python', 'gui/blackboard.py'], stdout=subprocess.PIPE)
             
@@ -46,6 +45,7 @@ class AudioPlayer():
         
         else:
             self.is_playing = False
+
                 
     def listen(self):
         # Thread is already allocated for this audio player if playing, ensure to use a thread only when it's not playing
