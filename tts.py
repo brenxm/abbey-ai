@@ -2,8 +2,6 @@ from google.cloud import texttospeech
 from datetime import datetime
 import os
 import threading
-import wavio
-import time
 
 # abbey languge_code = en-US, name = en-US-Studio-O
 # gemma language_code = fil-PH

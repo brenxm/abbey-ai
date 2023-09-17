@@ -1,0 +1,20 @@
+Agree / Yes
+    Yes, boss.
+    Agree, boss.
+    Yes, sir.
+    Agree, boss.
+    Okay, boss.
+    Okay, sir
+
+Wait / pending
+    Just a moment.
+    This might take a second.
+    Give me a moment.
+
+Done / Finished
+    Done, boss.
+
+Disagree / No
+    No, boss.
+    No, sir.
+    

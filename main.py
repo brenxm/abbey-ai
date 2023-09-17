@@ -162,12 +162,9 @@ def handle_prompt_test(prompt_input):
     
     memory.add_chat_history("user", response_obj["prompt_input"])
     
-    
-    sentence_pattern = r'[\D]{2,}[!\.\?](?<!\!)'
-    
     wrapper_parsers = response_obj["wrapper_parsers"] if "wrapper_parsers" in response_obj else []
     
-    streamer = ResponseStreamer(wrapper_parsers, response, tts, audio_player, sentence_pattern)
+    streamer = ResponseStreamer(wrapper_parsers, response, tts, audio_player)
     
     full_message = streamer.start()
     
@@ -192,7 +189,10 @@ def handle_prompt_test(prompt_input):
                     
                 except Exception as e:
                     print(f"ERROR FOUND: {e}")
-                    fn()
+                    try:
+                        fn()
+                    except:
+                        pass
                 
     
 # keyword_object initiation:

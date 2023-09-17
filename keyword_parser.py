@@ -50,10 +50,6 @@ class KeywordParser():
             "function_objs": keyword_objects
         }
                         
-            # Execute prior request functions and append post request functions
-        
-       
-        print(response)
         # Clean the keyword_objects
         return response
         
