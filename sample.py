@@ -1,4 +1,4 @@
-def calculate_sum(elements):
-    # Calculate and return the total of list elements
-    total = sum(elements)
+def calculate_sum(x, y):
+    # Calculate and return the sum of x and y
+    total = x + y
     return total

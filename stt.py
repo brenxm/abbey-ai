@@ -8,10 +8,7 @@ import time
 import os
 import openai
 import tempfile
-import re
 import threading
-import traceback
-
 
 class VoiceInput():
     def __init__(self, audio_player, voice_trigger=False):
@@ -33,10 +30,18 @@ class VoiceInput():
         self.audio_data_queue = []
         self.recording_audio = False
         self.audio_chunks = []
+        self.audio_chunk = None
+        self.transcribing = False
+
+        self.mic_thread_running = False
+        self.detected_silence = False
+        self.detected_index = []
 
         with sr.Microphone() as mic:
             self.SAMPLE_RATE = mic.SAMPLE_RATE
             self.SAMPLE_WIDTH = mic.SAMPLE_WIDTH
+
+        
 
     def init(self, fn):
         if not self.voice_trigger:
@@ -89,48 +94,37 @@ class VoiceInput():
         listener.start()
 
     def _start_record(self, buffer_size=1024):
+        """
+        This function records audio, transcribes voice input into text form, and returns the text.
 
-        p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=buffer_size)
+        Parameters:
+        buffer_size (int): The size of the audio buffer.
 
-        silence_start_time = None
+        Returns:
+        str: The transcribed text from the voice input.
+        """
+        
+
+        self.transcribing = True
+        self.open_mic()
 
         while self._keyboard_listening:
-            audio_chunk = stream.read(1024)
-            
-            # Convert audio chunk to integers for volume analysis
-            values = [int.from_bytes(audio_chunk[i:i+2], 'little', signed=True) for i in range(0, len(audio_chunk), 2)]
+            time.sleep(0.05)
 
-            # Check for silence
-            if max(values) < 300: # Silence threshold
-                if silence_start_time is None:
-                    silence_start_time = time.time()
-                elif time.time() - silence_start_time > 1.5: # Timeout time
-                    print('silent detected')
-                    if len(self.audio_chunks) >= 300:
-                        self.data_to_queue()
-            else:
-                self.audio_chunks.append(audio_chunk)
-                silence_start_time = None
+        self.audio_chunks.clear()
 
-        # Ensure to process data when stopped recording
-        if len(self.audio_chunks) >= 20:
-            self.data_to_queue()
-
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-        
         self.volume_controller.SetMasterVolumeLevelScalar(self.original_volume, None)
+
+        if self.transcribing:
+            time.sleep(0.05)
+            pass
+
         temp_text = self.transcribed_text
         self.transcribed_text = ""
+
         return temp_text
 
-
     def whisper_transcribe(self):
-        print("Received audio data, transcribing now.")
-        self.whisper_thread_open = True
-
         audio_data = self.audio_data_queue.pop(0)
         
         # Create an AudioData object from the raw data
@@ -154,14 +148,128 @@ class VoiceInput():
 
         if len(self.audio_data_queue) > 0:
             self.whisper_transcribe()
-        else: 
-            self.whisper_thread_open = False
+        else:
+            self.transcribing = False
 
-    def data_to_queue(self):
-        print(len(self.audio_chunks))
-        audio_data = b''.join(self.audio_chunks)
-        self.audio_chunks.clear()
+
+    def data_to_queue(self, audio_chunks):
+        audio_data = b''.join(audio_chunks)
         self.audio_data_queue.append(audio_data)
         self.whisper_transcribe()
 
+
+    def mic_stream(self, stream, p):
+        print('started streaming')
+        silence_start_time = None
+        silent_called = False
+        detected = False
+        detected_index = [0]
+        sound_detected = False
+        audio_chunks = []
+
+        while self._keyboard_listening:
+            chunk = stream.read(1024)
+            audio_chunks.append(chunk)
+
+            values = [int.from_bytes(chunk[i:i+2], 'little', signed=True) for i in range(0, len(chunk), 2)]
+
+            if max(values) > 700:
+                sound_detected = True
+
+            if max(values) < 300: 
+                if silence_start_time is None:
+                    silence_start_time = time.time()
+                elif time.time() - silence_start_time > 1.5 and not detected and sound_detected: 
+                    detected = True
+                    silent_called = True
+                    print('detected')
+                    index = len(audio_chunks)
+                    detected_index.append(index)
+                    t = threading.Thread(target=self.cut_audio_chunks, args = (detected_index, audio_chunks, ))
+                    t.start()
+                    
+            else:
+                detected = False
+                silence_start_time = None
+        try:
+            t.join()
+        except:
+            pass
+        
+        print(sound_detected)
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        if not silent_called and sound_detected:
+            if self.has_sound(audio_chunks):
+                self.transcribing = True
+                audio_chunks = self.trim_data(audio_chunks)
+                self.data_to_queue(audio_chunks)
+
+        elif len(detected_index) > 1 and sound_detected:
+            index = detected_index[-1]
+            cut_out = audio_chunks[index:]
+            if self.has_sound(cut_out):
+                self.transcribing = True
+                cut_out = self.trim_data(cut_out)
+                self.data_to_queue(cut_out)
+            
+        print('done streaming')
+
+
+    def open_mic(self, buffer_size = 1024):
+        pya = pyaudio.PyAudio()
+        self.p = pya
+        self.stream = pya.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=buffer_size)
+
+        t = threading.Thread(target=self.mic_stream, args=(self.stream ,self.p, ))
+        t.start()
+        t.join()
+
+    def cut_audio_chunks(self, detected_index, audio_chunks):
+        start_index = detected_index[-2]
+        last_index = detected_index[-1]
+        audio_data = audio_chunks[start_index: last_index]
+        audio_data = self.trim_data(audio_data)
+        if len(audio_data) < 10:
+            return
+        self.data_to_queue(audio_data)
+
+    def has_sound(self, audio_chunks):
+        for chunk in audio_chunks:
+            values = [int.from_bytes(chunk[i:i+2], 'little', signed=True) for i in range(0, len(chunk), 2)]
+
+            if max(values) > 700:
+                return True
+
+        return False
     
+    def trim_data(self, audio_chunks):
+        # Trim starting
+        counter = 0
+        for chunk in audio_chunks:
+            values = [int.from_bytes(chunk[i:i+2], 'little', signed=True) for i in range(0, len(chunk), 2)]
+
+            if max(values) < 400:
+                counter += 1
+                audio_chunks.remove(chunk)
+            
+            else:
+                break
+
+        for chunk in reversed(audio_chunks):
+            values = [int.from_bytes(chunk[i:i+2], 'little', signed=True) for i in range(0, len(chunk), 2)]
+
+            if max(values) < 400:
+                counter += 1
+                audio_chunks.remove(chunk)
+
+            else:
+                break
+        
+        print(f"removed useless chunks: {counter}x!")
+        print(f"used chunks: {len(audio_chunks)}")
+        return audio_chunks
+
+        # Trim ending
