@@ -13,9 +13,10 @@ class PromptRequest():
     def __init__(self, model):
         self.model=model,
         self.messages = []
+
     
     def prompt(self, prompt):
-        
+        print(self.messages)
         self.messages.append(
             {
                 "role": "user", 

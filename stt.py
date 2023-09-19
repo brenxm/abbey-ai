@@ -40,7 +40,6 @@ class VoiceInput():
         with sr.Microphone() as mic:
             self.SAMPLE_RATE = mic.SAMPLE_RATE
             self.SAMPLE_WIDTH = mic.SAMPLE_WIDTH
-
         
 
     def init(self, fn):
@@ -103,7 +102,6 @@ class VoiceInput():
         Returns:
         str: The transcribed text from the voice input.
         """
-        
 
         self.transcribing = True
         self.open_mic()
@@ -195,7 +193,7 @@ class VoiceInput():
             t.join()
         except:
             pass
-        
+
         print(sound_detected)
         stream.stop_stream()
         stream.close()

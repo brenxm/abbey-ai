@@ -28,6 +28,7 @@ def get_vscode(content_obj):
         "remove",
         "replace",
         "reformat",
+        "write a code"
     ]
 
     for word in trigger_words:

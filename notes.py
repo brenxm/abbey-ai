@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import openai
+import re
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -46,7 +47,7 @@ class Notes:
         with open(self.notes_file_path, "w") as f:
             json.dump(data, f, indent=4)
 
-    def read_note(self, title = False):
+    def read_note(self, prompt_input, title = False):
         """
         Returns content of a note matching the given title.
         """
@@ -61,9 +62,14 @@ class Notes:
         for note_obj in self.notes:
             if note_obj["title"] == title:
                 return {
-                    "messages": [{
-                            "role": "system", "content": f"Retrieved note: {note_obj['content']}. Read to the user the content"
-                        }]
+                    "messages": [
+                        {
+                            "role": "user", "content": prompt_input
+                        },
+                        {
+                            "role": "system", "content": f"Retrieved note {note_obj['content']}"
+                        }
+                        ]
                     }
         
         return {
@@ -74,7 +80,7 @@ class Notes:
                 ]
             }
 
-    def new_note(self, title, content):
+    def new_note(self, title, content, prompt_input):
         """
         Creates a new note with current date and time as metadata.
         """
@@ -90,27 +96,36 @@ class Notes:
         self.save(self.notes)
         return {
             "messages": [
-                    {"role": "assistant", "content": f"Notify user that you added new note title as '{title}'"},
+                {
+                    "role": "user", "content": prompt_input
+                },
+                    {"role": "system", "content": f"You (assistant) create a note titled {title}"},
                         ]
         }
 
-    def update_note(self, title):
+    def update_note(self, title, prompt_input):
         """
         Updates content of an existing note and its last updated time in metadata.
         """
-        note_data = self.read_note(title)
+        note_data = [note["content"] for note in self.notes if note["title"] == title][0]
+        if title not in self.get_titles():
+            return {
+                "messages": [
+                    {"role": "system", "content": f"You tried looking for file {title}, but it's not in the notes."}
+                ]
+            }
 
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages = [
-                {
-                    "role": "user", "content": obj["prompt_input"]
+                 {
+                        "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
                 },
                 {
-                    "role": "system", "content": f"The title of the note is '{title}' and the content of the note is '{note_data['messages'][0]['content']}'"
+                    "role": "system", "content": f"The title of the note is '{title}' and the content of the note is '{note_data}'"
                 },
                 {
-                    "role": "assistant", "content": "I updated the note as requested" 
+                    "role": "user", "content": prompt_input 
                 }
             ],
             functions = [
@@ -135,8 +150,8 @@ class Notes:
         
         print(response)
         if response["choices"][0]["message"]["function_call"]:
-            arg = response["choices"][0]["message"]["function_call"]["arguments"]
-            content = json.loads(arg).get("content")
+            arg = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])
+            content = arg.get("content")
             for note_obj in self.notes:
                 if note_obj["title"] == title:
                     note_obj["content"] = content
@@ -145,21 +160,27 @@ class Notes:
             self.save(self.notes)
             return {
                 "messages": [
-                    {"role": 'system', "content": "Task requested complete. Tell the user the action is complete"}
+                    {
+                        "role": "user", "content": prompt_input
+                    },
+                    {"role": 'system', "content": "In the background, You (assistant) completed this task"},
                 ]
             }
         
         else:
             raise("There was an error")
+        
 
-    def delete_note(self, title):
+
+    def delete_note(self, title, prompt_input):
         """
         Deletes a note.
         """
         if len(self.notes) == 0:
             return {
                 "messages": [
-                    {"role": "system", "content": "You tried deleting it but there is no note to delete"}
+                    {"role": "user", "content": prompt_input},
+                    {"role": "system", "content": "You (assistant) tried deleting it but there is no note to delete"}
                 ]
             }
         
@@ -167,6 +188,9 @@ class Notes:
         self.save(self.notes)
         return {
             "messages": [
+                {
+                    "role": "user", "content": prompt_input
+                },
                 {
                     "role": "system", "content": f"You deleted the note titled '{title}' as requested"
                 },
@@ -183,32 +207,71 @@ class Notes:
         """
         Returns a list of titles (strings) of available notes
         """
-        return [notes_obj["title"] for notes_obj in self.notes]
+        result = [notes_obj["title"] for notes_obj in self.notes]
+        if len(result) == 0:
+            return "No note in notes"
+        return result
+            
+    
+    def list_of_notes(self, obj):
 
-    def parser_objs(self):
-        obj_list = [
+        titles = self.get_titles()
+        if isinstance(titles, list):
+            data = ", ".join(titles)
+        
+        else:
+            data = titles
+        
+
+        response_obj = {}
+        response_obj["messages"] = [
             {
-                "keywords": r"((notes|note|plans|plan).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(notes|note|plans|plan))",
-                "prior_function": self.notes,
+            "role": "system", "content": f"You (Assistant) obtained the list of notes from the system. The list are {data}"
+            }
+        ]
+
+        return response_obj
+
+
+    @property
+    def parser_obj(self):
+        return   [
+             {
+                "keywords": re.compile(r"((notes|note|plans|plan).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(notes|note|plans|plan))", re.IGNORECASE),
+                "prior_function": [
+                    {
+                        "function": self.prior_fn,
+                        "arg": {
+
+                        }
+                    }
+                ]
+            },
+            {
+                "keywords": ["list of my notes"],
+                "prior_function": [
+                    {
+                        "function": self.list_of_notes,
+                        "arg": {}
+                    }
+                ]
             }
         ]
 
     def prior_fn(self, obj):
-        quick_system_response = f"The user ask you to complete a task. This is the requested task '{obj['prompt_input']}'. Response a quick, laconic confirmation."
-        quick_prompt_response(quick_system_response)
+        quick_system_response = f"The user ask you to complete a task. This is the requested task '{obj['prompt']}'. Response a quick, laconic confirmation."
 
         response_obj = obj
-        response_obj["messages"] = [{
-            "role": "system", "content": quick_system_response
-        }]
+        response_obj["messages"] = []
         function_map = {
             "read": self.read_note,
             "create": self.new_note,
             "update": self.update_note,
-            "delete": self.delete_note
+            "delete": self.delete_note,
                 
         }
-        keyword_used = obj["keyword_used"]
+        keyword_used = obj["keyword_obj"]["keyword_used"].lower()
+        
         
         # Get keyword
         keyword_dict = {
@@ -216,6 +279,7 @@ class Notes:
             "create": ["make", "write", "create"],
             "update": ["update", "modify"],
             "delete": ["remove", "delete"],
+            "titles": ["list of notes"]
         }
         
         # Iterate over each keyword in keyword used 
@@ -224,18 +288,20 @@ class Notes:
             for key, keywords in keyword_dict.items():
                 if word in keywords:
                     action_key = key
+
         
         if action_key == 'read':
-            
-
             response = openai.ChatCompletion.create(
                 model = 'gpt-4',
                 messages = [
                     {
+                        "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
+                    },
+                    {
                         "role": "system", "content": f"Available titles: [{self.get_titles()}], 'none' if not in the titles"
                     },
                     {
-                        "role": "user", "content": obj["prompt_input"]
+                        "role": "user", "content": obj["prompt"]
                     }
                 ],
                 
@@ -259,11 +325,15 @@ class Notes:
             )
             
         elif action_key == "create":
+            quick_prompt_response(quick_system_response)
             response = openai.ChatCompletion.create(
                 model = 'gpt-4',
                 messages = [
                     {
-                        "role": "user", "content": obj["prompt_input"]
+                        "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
+                    },
+                    {
+                        "role": "user", "content": obj["prompt"]
                     }
                 ],
                 
@@ -291,15 +361,19 @@ class Notes:
             )
              
         elif action_key == "update":
-             response = openai.ChatCompletion.create(
+            quick_prompt_response(quick_system_response)
+            response = openai.ChatCompletion.create(
                 
                 model = 'gpt-4',
                 messages = [
+                     {
+                        "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
+                    },
                     {
                         "role": "system", "content": f"Title of all notes: {self.get_titles()}"
                     },
                     {
-                        "role": "user", "content": obj["prompt_input"]
+                        "role": "user", "content": obj["prompt"]
                     }
                 ],
                 
@@ -328,11 +402,14 @@ class Notes:
             response = openai.ChatCompletion.create(
                 model = 'gpt-4',
                 messages = [
+                     {
+                        "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
+                    },
                     {
                         "role": "system", "content": f"Available titles: [{' '.join(titles)}]"
                     },
                     {
-                        "role": "user", "content": obj["prompt_input"]
+                        "role": "user", "content": obj["prompt"]
                     }
                 ],
                 
@@ -345,7 +422,7 @@ class Notes:
                                 "title": {
                                     "type": "string",
                                     "description": "The title of the note or plan to be deleted"
-                                }
+                                },
                             },
                             "required": ["title"]
                         }
@@ -355,24 +432,17 @@ class Notes:
                 function_call = {"name": "delete"}
             )
 
+            
+
         fn_name = response["choices"][0]["message"]["function_call"]["name"]
         fn = function_map.get(fn_name)
+        
         args = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])
-        print(response)
+        args["prompt_input"] = obj["prompt"]
         fn_response = fn(**args)  # Pass the updated args as parameters to the function
         
         if "messages" in fn_response:
             response_obj["messages"] += fn_response["messages"]
 
-        print(response_obj)
-
+        response_obj["delete_prompt"] = True
         return response_obj
-             
-note = Notes() 
-obj = {
-    "keyword_used": "delete a note",
-    "prompt_input": "delete a note about discussion strategies"
-}
-
-response = note.prior_fn(obj)
-quick_prompt_response(response["messages"])

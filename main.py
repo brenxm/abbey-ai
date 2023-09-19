@@ -14,6 +14,7 @@ from test import PromptRequest
 from keyword_parser import KeywordParser
 from fn_module.vscode.vscode_module import get_vscode, write_vscode
 import re
+from notes import Notes
 import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
@@ -32,6 +33,7 @@ def display_blackboard(response):
         pass
 
 
+notes = Notes()
 memory = AIMemory()
 audio_player = AudioPlayer(tts_queue)
 tts = TextToSpeech(tts_queue, audio_player)
@@ -107,19 +109,36 @@ def handle_prompt_test(prompt_input):
     for index, k_obj in enumerate(response_obj["function_objs"]):
         if 'prior_function' in k_obj:
             for prior_fn in k_obj["prior_function"]:
-                fn_name = prior_fn["name"]
+                if "name" not in prior_fn:
+                    fn = prior_fn["function"]
+
+                else:    
+                    fn_name = prior_fn["name"]
+                    fn = function_map.get_function(fn_name)
+
                 arg = prior_fn["arg"]
                 arg["prompt"] = prompt_input
                 arg["keyword_obj"] = k_obj
-                fn = function_map.get_function(fn_name)
                 fn_response = fn(arg)
                 
                 try:
                     response_obj['prompt_input'] = fn_response["prompt"]
                 except:
                     pass
-                
-                # Append wrapper parsers
+
+                try:
+                    if fn_response["delete_prompt"] == True:
+                        response_obj["prompt_input"] = ""
+                except:
+                    pass
+
+                try:
+                    for sys_obj in fn_response["messages"]:
+                        request.add_message(sys_obj)
+                except:
+                    pass
+
+
                 try:
                     if "wrapper_parsers" in response_obj:
                         response_obj["wrapper_parsers"] += fn_response["wrapper_parsers"]
@@ -281,5 +300,7 @@ keyword_parser.add_object([
     }
 ]
 )
+
+keyword_parser.add_object(notes.parser_obj)
     
 voice_input.init(handle_prompt_test)
