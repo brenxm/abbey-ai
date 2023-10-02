@@ -116,7 +116,8 @@ class KeywordParser():
                     if not isinstance(obj[property], valid_type["data_types"]):
                         raise ValueError(f"'{property}' does not match the expected type.")
         
-        if isinstance(obj, (dict)):
+        if isinstance(obj, dict):
+            print(f"ADDED OBJ: {obj}")
             self.keyword_objects.append(obj)
             
         elif isinstance(obj, (list)):

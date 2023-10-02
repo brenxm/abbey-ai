@@ -24,7 +24,8 @@ class Notes:
     }
     """
 
-    def __init__(self):
+    def __init__(self, memory):
+        self.memory = memory
         self.notes_file_path = os.path.join("data", "notes_data.json")
         self.load()
 
@@ -100,7 +101,9 @@ class Notes:
                     "role": "user", "content": prompt_input
                 },
                     {"role": "system", "content": f"You (assistant) create a note titled {title}"},
-                        ]
+                        ],
+
+                
         }
 
     def update_note(self, title, prompt_input):
@@ -226,7 +229,7 @@ class Notes:
         response_obj = {}
         response_obj["messages"] = [
             {
-            "role": "system", "content": f"You (Assistant) obtained the list of notes from the system. The list are {data}"
+            "role": "system", "content": f"You (Assistant) obtained the list of notes from the system. The list are [{data}]"
             }
         ]
 
@@ -237,7 +240,7 @@ class Notes:
     def parser_obj(self):
         return   [
              {
-                "keywords": re.compile(r"((notes|note|plans|plan).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(notes|note|plans|plan))", re.IGNORECASE),
+                "keywords": re.compile(r"((my notes|my plans).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(my notes|my plans))", re.IGNORECASE),
                 "prior_function": [
                     {
                         "function": self.prior_fn,
@@ -248,7 +251,8 @@ class Notes:
                 ]
             },
             {
-                "keywords": ["list of my notes"],
+                # TODO: Fix
+                "keywords": ["list of available notes"],
                 "prior_function": [
                     {
                         "function": self.list_of_notes,
@@ -295,6 +299,9 @@ class Notes:
                 model = 'gpt-4',
                 messages = [
                     {
+                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                    },
+                    {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
                     },
                     {
@@ -329,6 +336,9 @@ class Notes:
             response = openai.ChatCompletion.create(
                 model = 'gpt-4',
                 messages = [
+                    {
+                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                    },
                     {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
                     },
@@ -366,6 +376,9 @@ class Notes:
                 
                 model = 'gpt-4',
                 messages = [
+                    {
+                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                    },
                      {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
                     },
@@ -402,6 +415,9 @@ class Notes:
             response = openai.ChatCompletion.create(
                 model = 'gpt-4',
                 messages = [
+                    {
+                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                    },
                      {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
                     },
@@ -432,8 +448,6 @@ class Notes:
                 function_call = {"name": "delete"}
             )
 
-            
-
         fn_name = response["choices"][0]["message"]["function_call"]["name"]
         fn = function_map.get(fn_name)
         
@@ -443,6 +457,9 @@ class Notes:
         
         if "messages" in fn_response:
             response_obj["messages"] += fn_response["messages"]
+
+        if "histories" in fn_response:
+            response_obj["histories"] = fn_response["histories"]
 
         response_obj["delete_prompt"] = True
         return response_obj

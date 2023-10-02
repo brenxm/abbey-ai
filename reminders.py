@@ -13,11 +13,27 @@ class Reminders():
     '''
     Schema and instructions for each reminder provided in the comments above.
     '''
-    def __init__(self, openai = False):
+    def __init__(self, tts_converter, openai = None):
         self.reminders = []
         self.load()
         self.init_check_thread()
         self.openai = openai
+        self.parser_obj = {
+            "keywords": ["my reminders"],
+            "prior_function": [
+                {
+                    "function": self.prior_fn,
+                    "arg": {}
+                }
+            ]
+        }
+
+        self.tts = tts_converter
+        self.init_parser_obj()
+
+    def init_parser_obj(self):
+        if self.openai:
+            self.openai.add_object(self.parser_obj)
 
     def load(self):
         path = 'data/reminders.json'
@@ -31,19 +47,97 @@ class Reminders():
     def get_reminders(self):
         return str(self.reminders)
 
-    def delete(self, title):
+    def delete(self, title, prompt):
         self.reminders = [reminder for reminder in self.reminders if reminder['title'].lower() != title.lower()]
         self.save_reminders()
 
-    def new_reminder(self, title, description, due_date, due_time):
+        return {"messages": [
+            {
+                "role": "user", "content": prompt
+            },
+            {
+                "role": "system", "content": f"Succesfully deleted the reminder titled {title}"
+            }
+        ]
+        ,
+            "histories": [
+                {
+                    "role": "user", "content": prompt
+                },
+                {
+                    "role": "assistant-action-taken", "content": f"succesfully deleted the reminder titled {title}"
+                }
+            ]
+        }
+
+    def new_reminder(self, title, prompt, description = None, due_date = None, due_time = None):
         reminder = {
             "description": description,
-            "title": title,
-            "due_date": due_date,
-            "due_time": due_time
-        }
+            "title": title
+            }
+        
+        if due_time:
+            reminder["due_time"] = due_time
+
+        if due_date:
+            reminder["due_date"] = due_date
+
+
         self.reminders.append(reminder)
         self.save_reminders()
+
+        return {"messages": [
+            {
+                "role": "user", "content": prompt
+            },
+            {
+                "role": "system", "content": F"Assistant completely created a file titled as {title}"
+            }
+        ],
+            "histories": [
+                {
+                    "role": "user", "content": prompt
+                },
+                {
+                    "role": "assistant-action-taken", "content": f"succesfully created a reminder titled {title}"
+                }
+            ]
+        }
+
+    def update(self, title, prompt, description = None, due_date = None, due_time = None):
+        for index, reminder in enumerate(self.reminders):
+            if reminder["title"] == title:
+                if description:
+                    self.reminders[index]["description"] = description
+                if due_date:
+                    self.reminders[index]["due_date"] = due_date
+                if due_time:
+                    self.reminders[index]["due_time"] = due_time
+
+            break
+        
+        self.save_reminders()
+
+        return {
+            "messages": [
+                {
+                    "role": "user", "content": prompt
+                },
+                {
+                    "role": "system", "content": f"Assistant has succesfully updated the reminder titled {title}"
+                }
+            ],
+
+            "histories": [
+                {
+                    "role": "user", "content": prompt
+                },
+                {
+                    "role": "assistant-action-taken", "content": f"succesfully updated the reminder titled {title}"
+                }
+            ]
+        }
+
 
     def save_reminders(self):
         path = 'data/reminders.json'
@@ -70,29 +164,19 @@ class Reminders():
         print(", ".join(titles))
         return ", ".join(titles)
 
-    def parser_obj(self):
-        parser_obj = {
-            "keywords": ["my reminders, my reminders"],
-            "prior_functions": [
-                {
-                    "function": self.prior_fn,
-                    "arg": {}
-                }
-            ]
-        }
-
     def prior_fn(self, arg):
-
+        print("CALLED THIS")
         keywords = {
-            "create": ["create", "make"],
+            "create": ["create", "make", "add"],
             "read": ["check", "read"],
-            "update": ["update", "rewrite", "update"],
-            "delete": ["remove", "delete"]
+            "update": ["update", "rewrite"],
+            "delete": ["remove", "delete", "cancel"]
         }
 
         function_map = {
             "create": self.new_reminder,
             "read": self.get_reminders,
+            "update": self.update,
             "delete": self.delete
         }
 
@@ -109,6 +193,7 @@ class Reminders():
                 break
 
         if action == "create":
+            self.tts.summer_say("Writing that down now, sir.")
             response = self.openai_function_call(
                 [
                     {
@@ -142,11 +227,79 @@ class Reminders():
                             }
                         }
                     },
-                    "required": ["title", "description", "due_time"]
+                    "required": ["title", "description", "due_time", "due_date"]
                 },
                 action
             )
 
+        elif action == "read":
+            response_obj = arg
+            response_obj["messages"] = [
+                {
+                    "role": "user", "content": arg["prompt"]
+                },
+                {
+                    "role": "system", "content": f"Obtained reminders: {self.get_reminders()}"
+                }
+            ]
+
+            response_obj["histories"] = [
+                {
+                    "role": "user", "content": arg["prompt"]
+                },
+                {
+                    "role": "assistant-action-taken", "content": "Succesfully accessed the reminders"
+                }
+            ]
+
+            response_obj["delete_prompt"] = True
+            return response_obj
+
+
+        elif action == "update":
+            self.tts.summer_say("Updating now, sir. One moment.")
+            response = self.openai_function_call(
+                [
+                    {
+                        "role": "system", "content": f"Current date and time: {str(datetime.datetime.now())}"
+                    },
+                    {
+                        "role": "system", "content": f"available reminders: [{self.get_reminders()}]"
+                    },
+                    {
+                        "role": "user", "content": arg["prompt"]
+                    }
+                ],
+                {
+                    "name": action,
+                    "description": "Update a reminder",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "description": "title of the reminder to be updated",
+                            },
+                             "description": {
+                                "type": "string",
+                                "description": "updated description of the reminder if there is a change"
+                            },
+                            "due_date": {
+                                "type": "string",
+                                "description": "updated due date of the reminder if there is a change with format of %m-%d-%Y"
+                            },
+                            "due_time": {
+                                "type": "string",
+                                "description": "updated due time of the reminder if there is a changewith military time format e.g. 2300, 0700"
+                            }
+                        }
+                    },
+                    "required": ["title", "description", "due_date", "dute_time"]
+                },
+                action
+            )
+
+              
         elif action == "delete":
             response = self.openai_function_call(
                 [
@@ -174,17 +327,26 @@ class Reminders():
                 action
             )
 
-        
         fn_name = response["choices"][0]["message"]["function_call"]["name"]
         fn = function_map.get(fn_name)
         args = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])
+        args["prompt"] = arg["prompt"]
 
         fn_response = fn(**args)
 
-        print(response)
+        response_obj = arg
 
+        if "messages" in response_obj:
+            response_obj["messages"] += fn_response["messages"]
+        else:
+            response_obj["messages"] = fn_response["messages"]
+
+        if "histories" in fn_response:
+            response_obj["histories"] = fn_response["histories"]
+
+        response_obj["delete_prompt"] = True
+        return response_obj
         
-
     
     def openai_function_call(self, messages, function_obj, function_call_str):
         response = openai.ChatCompletion.create(
@@ -198,12 +360,3 @@ class Reminders():
 
         return response
 
-        
-reminder = Reminders()
-arg = {
-    "prompt": "in my reminders, create a reminder a grooming for my dog sainty on tomorrow at eleven in the morning"
-}
-reminder.prior_fn(arg)
-        
-
-        

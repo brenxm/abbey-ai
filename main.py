@@ -18,6 +18,7 @@ from notes import Notes
 import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
+from reminders import Reminders
 
 queue_lock = Lock()
 audio_queue = []
@@ -33,8 +34,8 @@ def display_blackboard(response):
         pass
 
 
-notes = Notes()
 memory = AIMemory()
+notes = Notes(memory)
 audio_player = AudioPlayer(tts_queue)
 tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
@@ -42,6 +43,7 @@ abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
 keyword_parser = KeywordParser()
+reminders = Reminders(tts, keyword_parser)
 
 function_map = FunctionMap()
 function_map.add_function([
@@ -90,7 +92,7 @@ def handle_prompt_test(prompt_input):
      # Add tone to system prompt
     laconic_prompt = {
         "role": "system",
-        "content": "You are an assistant named Summer. You answer with brief, laconic, succint and concise responses. Address me as 'boss' or 'sir' similar to Tony Stark's personal AI named Jarvis."}
+        "content": "You are an assistant named Summer. You answer with brief, laconic, succint and concise responses. Address me as 'boss' or 'sir' similar to Tony Stark's personal AI named Jarvis. Your humor level is 100%"}
     
     # Get memory data and include to new prompt
     memory_data = '\n'.join(memory.chat_history)
@@ -147,6 +149,11 @@ def handle_prompt_test(prompt_input):
                         response_obj["wrapper_parsers"] = fn_response["wrapper_parsers"]
                 except:
                     pass
+
+                try:
+                    response_obj["histories"] = fn_response["histories"]
+                except:
+                    pass
                     
                 
                 # Call additional prior function using the property 'fn_call'
@@ -179,7 +186,14 @@ def handle_prompt_test(prompt_input):
     # Sends OPENAI API request and result is assigned to response
     response = request.prompt(response_obj["prompt_input"])
     
-    memory.add_chat_history("user", response_obj["prompt_input"])
+    if response_obj["prompt_input"]:
+        memory.add_chat_history("user", response_obj["prompt_input"])
+
+    try:
+        for history in response_obj["histories"]:
+            memory.add_chat_history(history["role"], history["content"])
+    except:
+        pass
     
     wrapper_parsers = response_obj["wrapper_parsers"] if "wrapper_parsers" in response_obj else []
     

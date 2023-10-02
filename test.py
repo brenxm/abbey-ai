@@ -16,19 +16,22 @@ class PromptRequest():
 
     
     def prompt(self, prompt):
-        print(self.messages)
-        self.messages.append(
-            {
-                "role": "user", 
-                "content": prompt
-            }
-        )
+
+        if prompt:
+            self.messages.append(
+                {
+                    "role": "user", 
+                    "content": prompt
+                }
+            )
         
         response = openai.ChatCompletion.create(
             model='gpt-4',
             messages = self.messages,
             stream = True
         )
+
+        print(self.messages)
         
         return response
     

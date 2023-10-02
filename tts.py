@@ -81,4 +81,7 @@ class TextToSpeech():
             number += 1
 
         return os.path.join(directory, filename)
+
+    def summer_say(self, text):
+        self.convert(text, self.audio_player.listen)
             
