@@ -92,7 +92,7 @@ def handle_prompt_test(prompt_input):
      # Add tone to system prompt
     laconic_prompt = {
         "role": "system",
-        "content": "You are an assistant named Summer. You answer with brief, laconic, succint and concise responses. Address me as 'boss' or 'sir' similar to Tony Stark's personal AI named Jarvis. Your humor level is 100%"}
+        "content": "You are an assistant named Summer. You answer with brief, laconic, succint and concise responses. Address me as 'boss' or 'sir' similar to Tony Stark's personal AI named Jarvis."}
     
     # Get memory data and include to new prompt
     memory_data = '\n'.join(memory.chat_history)
@@ -195,7 +195,9 @@ def handle_prompt_test(prompt_input):
     except:
         pass
     
+    # Add wrapper parser
     wrapper_parsers = response_obj["wrapper_parsers"] if "wrapper_parsers" in response_obj else []
+    
     
     streamer = ResponseStreamer(wrapper_parsers, response, tts, audio_player)
     

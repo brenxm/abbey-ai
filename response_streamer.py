@@ -18,94 +18,43 @@ class ResponseStreamer():
         self.tts = tts
         self.audio_player = audio_player
         self.sentence_pattern = r'[\D]{2,}[!\.\?](?<!\!)'
+        self.wrapper_tag = '@@@'
         self.parsing_tag = False
         self.parsing_openai_tag = False
+        self.send_fn = wrapper_parser
         
     def start(self):
-        try:
-            opening_tags, closing_tags, fns, args = zip(*[(obj["opening_tag"], obj["closing_tag"], obj["function"], obj["arg"]) for obj in self.wrapper_parser])
-        except:
-            opening_tags = closing_tags = fns = args = []
 
         sentence = ""
         full_message = ""
-        arg = None
-        insert_line_pos = None
-        tag_str = ""
-        
-        openai_code_snippet_format_tag = ""    
+        parsing = False
         
         try:
             for chunk in self.response:
                 chunk = chunk["choices"][0]["delta"]["content"]
                 sentence += chunk
                 full_message += chunk
-                # Check if parsing
-                if self.parsing_tag:
-                   tag_str += chunk
-                   for tag in closing_tags:
-                        print(f" this is the tag_str: {tag_str} and this is the tag: {tag}")
-                        if tag == tag_str.strip():
-                            self.parsing_tag = False
-                            self.wrapper_parsing = False
-                            sentence = ""
-                            
-                elif self.parsing_openai_tag:
-                        openai_code_snippet_format_tag += chunk
-                        print(f'parsed first tag: {openai_code_snippet_format_tag}')
+
+                sentence_match = re.search(self.sentence_pattern, sentence)
+
+                # Toggles parsing mode
+                if chunk == "@@@":
+                    parsing = not parsing
+                    if sentence:
+                        self.play_audio(sentence)
                         sentence = ""
-                        if chunk == "\n":
-                            self.parsing_openai_tag = False
-                            
-                        continue
-                           
-                elif self.wrapper_parsing:
-                    if chunk == "!!!":
-                        self.parsing_tag = True
-                        tag_str += chunk
-                        continue
-                    
-                    clean_chunk = chunk.strip()
-                    if clean_chunk == "```":
-                        print('found a tag')
-                        self.parsing_openai_tag = True
-                        openai_code_snippet_format_tag += chunk
+                    continue
+
+                elif parsing:
+                    for fn in self.send_fn:
+                        fn(chunk)
                         sentence = ""
                         continue
-                   
-                                            
-                    arg["chunk"] = chunk
-                    arg["start_line"] = insert_line_pos
-                    self.parsing_fn(arg)
-                    insert_line_pos = arg["start_line"] + len(chunk)
+
+                elif sentence_match:
+                    self.play_audio(sentence)
                     sentence = ""
                     continue
-                
-                else:
-                    for tag in opening_tags:
-                        if tag in sentence:
-                            # Toggle parsing
-                            self.wrapper_parsing = True
-                            
-                            # Get callback function and arg
-                            index = opening_tags.index(tag)
-                            self.parsing_fn = fns[index]
-                            arg = args[index]
-                            insert_line_pos = arg["start_line"]
-                            
-                            # Get word prior to tag if any
-                            no_tag = sentence.replace(tag, "")
-                            if len(no_tag) > 0:
-                                if no_tag[0]:
-                                    self.tts.convert(no_tag[0], self.audio_player.listen)
-                                
-                            sentence = ""
-                            continue
-                        
-                    sentence_match = re.search(self.sentence_pattern, sentence)
-                    if sentence_match:
-                        self.tts.convert(sentence, self.audio_player.listen)
-                        sentence = ""
             
 
         except Exception as e:
@@ -118,9 +67,14 @@ class ResponseStreamer():
             '''
             print(f"SENTENCES ENDING {sentence}")
             if sentence:
-                self.tts.convert(sentence, self.audio_player.listen)
+                self.play_audio(sentence)
             
         return full_message
+    
+
+    def play_audio(self, text):
+        self.tts.convert(text, self.audio_player.listen)
+
     
 
 def quick_prompt_response(system_prompt, tone=True):
@@ -176,3 +130,5 @@ def _quick_prompt_respones(system_prompt, tone=True):
                 converter.convert(sentence, audio_player.listen)
             print(full_message)
             pass
+
+
