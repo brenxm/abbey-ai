@@ -24,7 +24,6 @@ queue_lock = Lock()
 audio_queue = []
 tts_queue = []
 
-
 def display_blackboard(response):
     pattern = r'!!!blackboard-start!!!.+!!!blackboard-end!!!'
     match = re.search(pattern, response, re.DOTALL)
@@ -32,7 +31,6 @@ def display_blackboard(response):
     if match:
         #print(f"displayed to blackboard: {match.group()}")
         pass
-
 
 memory = AIMemory()
 notes = Notes(memory)
@@ -56,7 +54,6 @@ function_map.add_function([
             "function": memory.clear
         }
     ])
-
 
 abbey.set_personality("You are my AI assistant named Abbey. You respond with direct to the point, elaborated but straight to point answer. Address me as 'boss' or 'sir' without comma ',' similar to Tony Stark's personal AI named Jarvis.")
 
@@ -101,8 +98,15 @@ def handle_prompt_test(prompt_input):
         "content": f"Recent chat history: \n{memory_data}"
         }
     
+
+    parsing_test = {
+        "role": "system",
+        "content": "If response has a code snippet, make sure to wrap it with '@@', e.g. @@<code>@@"
+    }
+    
     request.add_message(laconic_prompt),
     request.add_message(memory_data_str)
+    request.add_message(parsing_test)
     
     response_obj = keyword_parser.parse(prompt_input)
     

@@ -93,8 +93,6 @@ def get_vscode(content_obj):
 
 def write_vscode(obj):
     content = obj["prompt"]
-    opening_tag = "!!!vscode-start!!!"
-    closing_tag = "!!!vscode-end!!!"
     pattern = re.compile(r"!!!vscode-start!!!(.+?)!!!vscode-end!!!", re.DOTALL)
 
     tag_match = re.search(pattern, content)

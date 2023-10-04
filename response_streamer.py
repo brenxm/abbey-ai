@@ -18,38 +18,51 @@ class ResponseStreamer():
         self.tts = tts
         self.audio_player = audio_player
         self.sentence_pattern = r'[\D]{2,}[!\.\?](?<!\!)'
-        self.wrapper_tag = '@@@'
-        self.parsing_tag = False
-        self.parsing_openai_tag = False
-        self.send_fn = wrapper_parser
+        self.wrapper_tag = '@@'
+        self.parsing_tag = False 
+        self.parsing_openai_tag = False 
+        self.send_fn = [self.test]
         
     def start(self):
-
         sentence = ""
         full_message = ""
         parsing = False
+        send_line_buffer = ""
         
         try:
             for chunk in self.response:
                 chunk = chunk["choices"][0]["delta"]["content"]
-                sentence += chunk
-                full_message += chunk
+                if "@@" not in chunk:
+                    sentence += chunk
+                    full_message += chunk
 
                 sentence_match = re.search(self.sentence_pattern, sentence)
 
                 # Toggles parsing mode
-                if chunk == "@@@":
+                if "@@" in chunk:
+                    print('called')
                     parsing = not parsing
                     if sentence:
+                        sentence = sentence.replace("@@", "")
                         self.play_audio(sentence)
-                        sentence = ""
+                    sentence = ""
                     continue
 
                 elif parsing:
-                    for fn in self.send_fn:
-                        fn(chunk)
-                        sentence = ""
-                        continue
+                    send_line_buffer += chunk
+
+                    if send_line_buffer.endswith("\n") and len(send_line_buffer) > 1:
+                        for fn in self.send_fn:
+                            if '```' not in send_line_buffer:
+                                fn(send_line_buffer)
+
+                            send_line_buffer = ""
+
+                    elif send_line_buffer == "\n":
+                        send_line_buffer = ""
+
+                    sentence = ""
+                    continue
 
                 elif sentence_match:
                     self.play_audio(sentence)
@@ -65,7 +78,6 @@ class ResponseStreamer():
             traceback.print_tb(e.__traceback__)
             print(f"ERROR ARGS: {e.args}")
             '''
-            print(f"SENTENCES ENDING {sentence}")
             if sentence:
                 self.play_audio(sentence)
             
@@ -75,7 +87,20 @@ class ResponseStreamer():
     def play_audio(self, text):
         self.tts.convert(text, self.audio_player.listen)
 
-    
+    def test(self, chunk):
+        try:
+            with open("text.txt", "r") as f:
+                content = f.read()
+        except FileNotFoundError:
+            print("text.txt not found. Creating a new file.")
+            content = ""
+
+        try:
+            with open('text.txt', 'w') as f:
+                f.write(content + chunk)
+        except Exception as e:
+            print(f"An error occurred while writing to the file: {e}")
+
 
 def quick_prompt_response(system_prompt, tone=True):
     quick_prompt_thread = threading.Thread(target=(_quick_prompt_respones), args=(system_prompt, tone))
@@ -128,7 +153,6 @@ def _quick_prompt_respones(system_prompt, tone=True):
         except:
             if sentence:
                 converter.convert(sentence, audio_player.listen)
-            print(full_message)
             pass
 
 
