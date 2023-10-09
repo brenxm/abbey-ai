@@ -36,7 +36,7 @@ class KeywordParser():
                         parsed_obj = self.keyword_objects[index]
                         parsed_obj["keyword_used"] = keyword
                         keyword_objects.append(parsed_obj)
-                
+                    
                 elif isinstance(obj["keywords"], re.Pattern):
                     match_keyword = re.search(obj["keywords"], keyword)
                     if match_keyword:

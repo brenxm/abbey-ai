@@ -146,11 +146,11 @@ def handle_prompt_test(prompt_input):
 
 
                 try:
-                    if "wrapper_parsers" in response_obj:
-                        response_obj["wrapper_parsers"] += fn_response["wrapper_parsers"]
+                    if "wrapper_functions" in response_obj:
+                        response_obj["wrapper_functions"] += fn_response["wrapper_functions"]
                         
                     else:
-                        response_obj["wrapper_parsers"] = fn_response["wrapper_parsers"]
+                        response_obj["wrapper_functions"] = fn_response["wrapper_functions"]
                 except:
                     pass
 
@@ -200,7 +200,7 @@ def handle_prompt_test(prompt_input):
         pass
     
     # Add wrapper parser
-    wrapper_parsers = response_obj["wrapper_parsers"] if "wrapper_parsers" in response_obj else []
+    wrapper_parsers = response_obj["wrapper_functions"] if "wrapper_functions" in response_obj else []
     
     
     streamer = ResponseStreamer(wrapper_parsers, response, tts, audio_player)

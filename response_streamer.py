@@ -1,6 +1,5 @@
 from audioplayer import AudioPlayer
 from tts import TextToSpeech
-import traceback
 import re
 import os
 import openai
@@ -11,7 +10,7 @@ import threading
 
 class ResponseStreamer():
     def __init__(self, wrapper_parser, response, tts, audio_player):
-        self.wrapper_parser = wrapper_parser
+        self.wrapper_parser = wrapper_parser #List of functions needed to call
         self.response = response
         self.wrapper_parsing = False
         self.parsing_fn = None
@@ -40,7 +39,6 @@ class ResponseStreamer():
 
                 # Toggles parsing mode
                 if "@@" in chunk:
-                    print('called')
                     parsing = not parsing
                     if sentence:
                         sentence = sentence.replace("@@", "")
