@@ -1,5 +1,8 @@
 from dotenv import load_dotenv
-from fn_module.vscode.pipe_connection import request
+import pygetwindow as gw
+import pyautogui
+import win32file
+import pywintypes
 import json
 import openai
 import os
@@ -8,6 +11,105 @@ import black
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+class VSCodeModule():
+    def __init__(self, parser_class):
+        self.parser_class = parser_class
+        self.init_parser_class()
+
+    def init_parser_class(self):
+        self.parser_class.add_object(self.parser_obj)
+
+    @property
+    def parser_obj(self):
+        return {
+            "keywords": ["my code", "active code", "this code"],
+            "prior_function": [
+                {
+                    "function": self.parse_fn,
+                    "arg": {}
+                }
+            ]
+        }
+
+    def parse_fn(self, arg):
+        vscode_data = self.request()
+        
+        keywords = {
+            "refactor_keyword": ["modify", "change", "rewrite", "fix"],
+            "add_keyword": ["write", "add", "extend"]
+        }
+
+        all_keyword = keywords["refactor_keyword"] + keywords["add_keyword"]
+
+        action_keyword = ""
+        for word in all_keyword:
+            if word in arg["prompt"]:
+                for type in keywords:
+                    if word in keywords[type]:
+                        action_keyword = type
+                        break
+
+        code = vscode_data["highlightedCode"] if vscode_data["highlightedCode"] else vscode_data["activeCode"]
+        
+        if action_keyword == "refactor_keyword":
+            pass
+            
+        elif action_keyword == "add_keyword":
+            pass
+
+        elif action_keyword == "":
+            return {
+                "messages": [
+                    {
+                        "role": "system", "content": f"Code obtained from VS Code: {code}"
+                    },
+                ],
+
+                "histories": [{
+                    "role": "system",
+                    "content": f"Code obtained from VS Code: {code}"
+                }],
+                "wrapper_functions": [self.test]
+            }
+
+    def test(self, chunk):
+        print(chunk)
+
+    def request(self):
+        window_title = gw.getWindowsWithTitle(pyautogui.getActiveWindow().title)
+        pipe_code_match = re.search(r'\s-\s(.*?)\s-\s', window_title[0].title)
+        
+        PIPE_NAME = f'\\\\.\\pipe\\{pipe_code_match.group(1)}'
+        
+        while True:
+            try:
+                handle = win32file.CreateFile(
+                    PIPE_NAME,
+                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                    0, None,
+                    win32file.OPEN_EXISTING,
+                    0, None)
+                break
+            except pywintypes.error as e:
+                if e.args[0] == 2: # File not found error
+                    continue
+                raise
+            
+        # Connect and receive the message
+
+        message_to_send = "getData".encode('utf-8')
+        win32file.WriteFile(handle, message_to_send)
+
+        _, data = win32file.ReadFile(handle, 100000)
+        win32file.CloseHandle(handle)
+        print('Received data from VSCODE')
+        
+        raw_data = data.decode('utf-8')
+        dict_data = json.loads(raw_data)
+        return dict_data
+
 
 def get_vscode(content_obj):
     print("CALLED GET_VSCODE")
@@ -233,4 +335,3 @@ def insert_code(obj):
     # Write the modified contents back to the file
     with open(filename, "w") as file:
         file.write(modified_contents)
-        

@@ -121,12 +121,15 @@ function activate(context) {
 				let selection = activeEditor.selection;
 				let selectedText = activeEditor.document.getText(selection)
 				let filePath = document.uri.fsPath;
+				let charPosition = activeEditor.selection.active.character
 
 				object.highlightedCodeStartLine = selection.start.line
 				object.highlightedCodeEndLine = selection.end.line
 				object.activeCode = entireFileText
 				object.highlightedCode = selectedText
 				object.filePath = filePath
+				object.charPosition = charPosition
+				
 				let tree = dirTree(object.folderPath, {exclude: [/.vscode$/, /__pycache__/, /.pytest_cache/, /node_modules/, /test/, /utils/, /.git/, /.svn/, /.hg/, /CVS/, /.DS_Store/, /Thumbs.db/]})
 
 				object.folderStructure = visualizeTree(tree)

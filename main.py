@@ -19,6 +19,7 @@ import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
 from reminders import Reminders
+from fn_module.vscode.vscode_module import VSCodeModule
 
 queue_lock = Lock()
 audio_queue = []
@@ -41,6 +42,7 @@ abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
 keyword_parser = KeywordParser()
+vscode_module = VSCodeModule(keyword_parser)
 reminders = Reminders(tts, keyword_parser)
 
 function_map = FunctionMap()
@@ -99,14 +101,13 @@ def handle_prompt_test(prompt_input):
         }
     
 
-    parsing_test = {
+    enclose_prompt = {
         "role": "system",
-        "content": "If response has a code snippet, make sure to wrap it with '@@', e.g. @@<code>@@"
+        "content": "Ensure to wrap/enclose the part of your response with '@@' if your response has code snppet, items or list, instructions or etc. e.g. @@<code snippet>@@, @@<list of instruction/items>@@, the lesser and greater symbol are placeholder"
     }
     
     request.add_message(laconic_prompt),
     request.add_message(memory_data_str)
-    request.add_message(parsing_test)
     
     response_obj = keyword_parser.parse(prompt_input)
     
@@ -143,8 +144,8 @@ def handle_prompt_test(prompt_input):
                         request.add_message(sys_obj)
                 except:
                     pass
-
-
+                
+                
                 try:
                     if "wrapper_functions" in response_obj:
                         response_obj["wrapper_functions"] += fn_response["wrapper_functions"]
@@ -184,7 +185,17 @@ def handle_prompt_test(prompt_input):
                         response_obj["function_objs"][index]["post_function"] += fn_response["post_functions"]
                 except Exception as e:
                     print(e)
-           
+
+
+    
+    # Active parsing using @@ if has wrapper_functions
+    try:
+        if len(response_obj["wrapper_functions"]) > 0:
+            request.add_message(enclose_prompt)
+            print('added enclose prompt')
+    except:
+        print('error occured while adding eclose prompt')
+        pass
                     
             
     # Sends OPENAI API request and result is assigned to response
@@ -249,46 +260,6 @@ keyword_parser.add_object([
         ]
     },
     {
-        "keywords": ['active code', 'current code', 'get active code'],
-        "prior_function": [
-            {
-                "name": "get_vscode",
-                "function": get_vscode,
-                "arg": {
-                        "get_method": "activeCode",
-                        "label": "code"
-                    }
-            }
-        ]
-    },
-    {
-        "keywords": ["highlighted code"],
-        "prior_function": [
-            {
-                "name": "get_vscode",
-                "function": get_vscode,
-                "arg": {
-                    "get_method": "highlightedCode",
-                    "label": "highlighted code"
-                }
-            }
-        ],
-        "post_function": []
-    },
-    {
-        "keywords": ["vscode folder path", "VS Code folder path"],
-        "prior_function": [
-            {
-                "name": "get_vscode",
-                "function": get_vscode,
-                "arg": {
-                    "get_method": "folderPath",
-                    "label": "vscode folder path",
-                }
-            }
-        ]
-    },
-    {
         "keywords": re.compile(r'\b(clear|delete)\b(?:\s*\bour\b)?\s*\bchat history\b', re.IGNORECASE),
         "prior_function": [
             {
@@ -304,19 +275,6 @@ keyword_parser.add_object([
             "name": 'memory.clear',
             "function": memory.clear,
             }]
-    },
-    {
-        "keywords": ["VS Code folder structure"],
-        "prior_function": [
-            {
-                "name": "get_vscode",
-                "function": get_vscode,
-                "arg": {
-                    "get_method": "folderStructure",
-                    "label": "project folder structure",
-                }
-            }
-        ]
     }
 ]
 )

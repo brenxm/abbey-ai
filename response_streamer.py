@@ -50,7 +50,7 @@ class ResponseStreamer():
                     send_line_buffer += chunk
 
                     if send_line_buffer.endswith("\n") and len(send_line_buffer) > 1:
-                        for fn in self.send_fn:
+                        for fn in self.wrapper_parser:
                             if '```' not in send_line_buffer:
                                 fn(send_line_buffer)
 

@@ -1,4 +1,7 @@
 from types import FunctionType, MethodType
+import os
+import sys
+import importlib
 import json
 import re
 import types
@@ -7,6 +10,7 @@ class KeywordParser():
     def __init__(self):
         self.keyword_objects = []
         self.prompt_input = ""
+        self.modules = []
         
     def parse(self, prompt_input):
         # Getting and setting up all available keywords
@@ -124,5 +128,30 @@ class KeywordParser():
             for item in obj:
                 self.keyword_objects.append(item)
     
-    
-        
+
+    def load_modules(self):
+        module_dir = "./modules"
+        os.chdir(module_dir)
+        sys.path.append(os.getcwd())
+
+        for filename in os.listdir():
+            if filename.endswith('.py') and filename != '__init__.py':
+                module_name = filename[:-3]
+                module = importlib.import_module(module_name)
+
+                # Get the modules attributes, omitting systems attributes
+                attributes = [attribute for attribute in dir(module) if not attribute.endswith('__') and not attribute.startswith('__')]
+
+                if len(attributes) > 1 or len(attributes) == 0:
+                    pass
+                    #TODO: go to next folder
+
+                module_class = module[attributes[0]]
+                
+
+
+                
+
+if __name__ == "__main__":
+    parser = KeywordParser()
+    parser.load_modules()
