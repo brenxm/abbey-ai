@@ -27,21 +27,27 @@ audio_queue = []
 tts_queue = []
 
 # Initialization process
+# Load all plugin instances
+
+# TODO: Modify plugins so it accepts an argument which is an object,
+# sharable methods, data to all plugins
 plugins = Plugins()
 plugins.load_plugins(['./plugins/'])
 
+# Register all loaded plugins to keyword_parser
+keyword_parser = KeywordParser()
+keyword_parser.register_plugins(plugins.loaded_plugins)
 
-memory = AIMemory()
+
 notes = Notes(memory)
+memory = AIMemory()
 audio_player = AudioPlayer(tts_queue)
 tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
-keyword_parser = KeywordParser()
 vscode_module = VSCodeModule(keyword_parser)
-reminders = Reminders(tts, keyword_parser)
 
 function_map = FunctionMap()
 function_map.add_function([

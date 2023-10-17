@@ -13,12 +13,11 @@ class Reminders():
     '''
     Schema and instructions for each reminder provided in the comments above.
     '''
-    def __init__(self, tts_converter, openai = None):
+    def __init__(self):
         self.reminders = []
-        self.load()
+        self.load_reminders()
         self.init_check_thread()
-        self.openai = openai
-        self.parser_obj = {
+        self.parser_id = {
             "keywords": ["my reminders"],
             "prior_function": [
                 {
@@ -28,14 +27,7 @@ class Reminders():
             ]
         }
 
-        self.tts = tts_converter
-        self.init_parser_obj()
-
-    def init_parser_obj(self):
-        if self.openai:
-            self.openai.add_object(self.parser_obj)
-
-    def load(self):
+    def load_reminders(self):
         path = 'data/reminders.json'
         if not os.path.isfile(path):
             with open(path, 'w') as f:
@@ -193,7 +185,7 @@ class Reminders():
                 break
 
         if action == "create":
-            self.tts.summer_say("Writing that down now, sir.")
+           # self.tts.summer_say("Writing that down now, sir.")
             response = self.openai_function_call(
                 [
                     {
@@ -257,7 +249,7 @@ class Reminders():
 
 
         elif action == "update":
-            self.tts.summer_say("Updating now, sir. One moment.")
+          #  self.tts.summer_say("Updating now, sir. One moment.")
             response = self.openai_function_call(
                 [
                     {

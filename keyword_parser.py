@@ -24,7 +24,6 @@ class KeywordParser():
             elif isinstance(obj["keywords"], list):
                 keywords += obj["keywords"]
             
-        print(f"THIS ARE THE KEYWORDS {' '.join(keywords)}")
         # Match keywords with prompt input
         parsed_keywords = []
         for keyword in keywords:
@@ -48,7 +47,6 @@ class KeywordParser():
                         parsed_obj["keyword_used"] = keyword
                         keyword_objects.append(parsed_obj)
                     
-        print(f"THIS ARE THE KEYWORD OBJECTS:{len(keyword_objects)}")
         response = {
             "prompt_input": prompt_input,
             "function_objs": keyword_objects
@@ -121,7 +119,6 @@ class KeywordParser():
                         raise ValueError(f"'{property}' does not match the expected type.")
         
         if isinstance(obj, dict):
-            print(f"ADDED OBJ: {obj}")
             self.keyword_objects.append(obj)
             
         elif isinstance(obj, (list)):
@@ -129,24 +126,10 @@ class KeywordParser():
                 self.keyword_objects.append(item)
     
 
-    def load_modules(self):
-        module_dir = "./modules"
-        os.chdir(module_dir)
-        sys.path.append(os.getcwd())
-
-        for filename in os.listdir():
-            if filename.endswith('.py') and filename != '__init__.py':
-                module_name = filename[:-3]
-                module = importlib.import_module(module_name)
-
-                # Get the modules attributes, omitting systems attributes
-                attributes = [attribute for attribute in dir(module) if not attribute.endswith('__') and not attribute.startswith('__')]
-
-                if len(attributes) > 1 or len(attributes) == 0:
-                    pass
-                    #TODO: go to next folder
-
-                module_class = module[attributes[0]]
+    def register_plugins(self, plugins):
+        for plugin in plugins:
+            self.add_object(plugin.parser_id)
+            print('loaded plugin in parser obj')
 
 if __name__ == "__main__":
     parser = KeywordParser()
