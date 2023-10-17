@@ -9,13 +9,14 @@ class Plugins():
     def load_plugins(self, paths):
         for path in paths:
             path_contents = [file for file in os.listdir(path) if not file.endswith('__') and not file.startswith('__')] # Removing systems directory
+            
             for file in path_contents:
                 temp_path = os.path.join(path, file)
                 
                 if os.path.isdir(temp_path):
                     self.load_plugin_from_dir(temp_path)
 
-            print("All plugins are checked.")
+        print("All plugins are checked.")
 
 
     def load_plugin_from_dir(self, path):

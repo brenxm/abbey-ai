@@ -147,10 +147,6 @@ class KeywordParser():
                     #TODO: go to next folder
 
                 module_class = module[attributes[0]]
-                
-
-
-                
 
 if __name__ == "__main__":
     parser = KeywordParser()
