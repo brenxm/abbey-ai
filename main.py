@@ -20,18 +20,16 @@ from function_map import FunctionMap
 from response_streamer import ResponseStreamer
 from reminders import Reminders
 from fn_module.vscode.vscode_module import VSCodeModule
+from plugins.plugins import Plugins
 
 queue_lock = Lock()
 audio_queue = []
 tts_queue = []
 
-def display_blackboard(response):
-    pattern = r'!!!blackboard-start!!!.+!!!blackboard-end!!!'
-    match = re.search(pattern, response, re.DOTALL)
-    
-    if match:
-        #print(f"displayed to blackboard: {match.group()}")
-        pass
+# Initialization process
+plugins = Plugins()
+plugins.load_plugins(['./plugins/'])
+
 
 memory = AIMemory()
 notes = Notes(memory)

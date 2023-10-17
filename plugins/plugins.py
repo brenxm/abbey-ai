@@ -9,10 +9,9 @@ class Plugins():
     def load_plugins(self, paths):
         for path in paths:
             path_contents = [file for file in os.listdir(path) if not file.endswith('__') and not file.startswith('__')] # Removing systems directory
-            
+
             for file in path_contents:
                 temp_path = os.path.join(path, file)
-                
                 if os.path.isdir(temp_path):
                     self.load_plugin_from_dir(temp_path)
 
@@ -20,26 +19,25 @@ class Plugins():
 
 
     def load_plugin_from_dir(self, path):
-        for filename in os.path.listdir(path):
-            if filename.endswitch('_module.py'):
-                module_name = filename[:-3]
-                sys.path.append(path)
-                module = importlib.import_module(module_name)
+        sys.path.append(path)
+
+        for filename in os.listdir(path):
+            if filename.endswith('_plugin.py'):
+                plugin_name = filename[:-3]
+                module = importlib.import_module(plugin_name)
 
                 if hasattr(module, 'register'):
-                    module_instance = module.register()
-                    self.loaded_plugins.append(module_instance)
+                    plugin_instance = module.register()
+                    self.loaded_plugins.append(plugin_instance)
                     return
                 
                 else:
-                    print('A module exist but has no "register" attribute/method implemented.')
+                    print(f"A plugin file named '{plugin_name}' exist but has no 'register' function implemented.")
                     return
         
-        print(f"A directory exist but has no module script")
+        print(f"A folder named '{os.path.basename(path)}' in plugins directory exist but has no plugin script")
 
-                                
-
-
+# Used for testing, disregard
 if __name__ == "__main__":
     instance = Plugins()
     instance.load_plugins(['./plugins/'])
