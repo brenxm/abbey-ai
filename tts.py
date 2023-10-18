@@ -30,10 +30,10 @@ class TextToSpeech():
         
         self.is_converting = False
         
-    def convert(self, text, cb_play_audio):
+    def convert(self, text):
         self.text_queue.append(text)
         if not self.is_converting:
-            converting_thread = threading.Thread(target=self._converting, args=(cb_play_audio,))
+            converting_thread = threading.Thread(target=self._converting, args=(self.audio_player.listen,))
             converting_thread.start()
         
     def _converting(self, cb_play_audio):

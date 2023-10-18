@@ -13,7 +13,8 @@ class Reminders():
     '''
     Schema and instructions for each reminder provided in the comments above.
     '''
-    def __init__(self):
+    def __init__(self, ai_say, **kwarg):
+        self.ai_say = ai_say
         self.reminders = []
         self.load_reminders()
         self.init_check_thread()
@@ -185,7 +186,7 @@ class Reminders():
                 break
 
         if action == "create":
-           # self.tts.summer_say("Writing that down now, sir.")
+            self.ai_say('Writing that down now sir.')
             response = self.openai_function_call(
                 [
                     {
@@ -249,7 +250,7 @@ class Reminders():
 
 
         elif action == "update":
-          #  self.tts.summer_say("Updating now, sir. One moment.")
+            self.ai_say("Updating now, sir. One moment.")
             response = self.openai_function_call(
                 [
                     {
@@ -353,6 +354,6 @@ class Reminders():
         return response
 
 
-def register():
-    return Reminders()
+def register(arg):
+    return Reminders(**arg)
 

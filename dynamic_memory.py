@@ -50,5 +50,3 @@ class AIMemory():
             self.chat_history = data["chat_history"]
         except:
             print("No existing memory. Starting from fresh")
-            
-    

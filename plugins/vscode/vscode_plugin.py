@@ -1,2 +1,2 @@
-def register():
+def register(arg):
     return {}

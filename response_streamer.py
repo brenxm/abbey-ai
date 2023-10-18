@@ -83,7 +83,7 @@ class ResponseStreamer():
     
 
     def play_audio(self, text):
-        self.tts.convert(text, self.audio_player.listen)
+        self.tts.convert(text)
 
     def test(self, chunk):
         try:

@@ -5,6 +5,7 @@ import os
 class Plugins():
     def __init__(self):
         self.loaded_plugins = [] # Instances of plugins
+        self.shared_utilities = {}
 
     def load_plugins(self, paths):
         for path in paths:
@@ -26,7 +27,7 @@ class Plugins():
                 module = importlib.import_module(plugin_name)
 
                 if hasattr(module, 'register'):
-                    plugin_instance = module.register()
+                    plugin_instance = module.register(self.shared_utilities)
                     
                     # Check if the instance has a required property 'parser_id'
                     if not hasattr(plugin_instance, 'parser_id'):
@@ -42,6 +43,10 @@ class Plugins():
                     return
         
         print(f"Error loading plugin: A folder named '{os.path.basename(path)}' in plugins directory exist but has no plugin script")
+
+
+    def load_shared_utilities(self, obj):
+        self.shared_utilities.update(obj)
 
 # Used for testing, disregard
 if __name__ == "__main__":
