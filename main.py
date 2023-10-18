@@ -40,16 +40,12 @@ abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
 vscode_module = VSCodeModule(keyword_parser)
-
-
-
-
-
 plugins = Plugins()
 
 # Load shared utilities to be used to all plugins
 plugins.load_shared_utilities({'chat_history': memory.chat_history})
 plugins.load_shared_utilities({'ai_say': tts.convert})
+# TODO: add a error handling on load_shared_utilities to alert if there is conflicting 'keys' 
 
 # Load all plugin instances
 plugins.load_plugins(['./plugins/'])
