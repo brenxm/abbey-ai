@@ -28,6 +28,18 @@ class Notes:
         self.memory = memory
         self.notes_file_path = os.path.join("data", "notes_data.json")
         self.load()
+        self.parser_id = {
+                "keywords": re.compile(r"((my notes|my plans).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(my notes|my plans))", re.IGNORECASE),
+                "prior_function": [
+                    {
+                        "function": self.prior_fn,
+                        "arg": {
+
+                        }
+                    }
+                ]
+            },
+        
 
     def load(self):
         """
@@ -463,3 +475,7 @@ class Notes:
 
         response_obj["delete_prompt"] = True
         return response_obj
+    
+    
+def register(arg):
+    return Notes(**arg)

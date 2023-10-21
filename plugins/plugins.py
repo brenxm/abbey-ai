@@ -46,8 +46,15 @@ class Plugins():
 
 
     def load_shared_utilities(self, obj):
-        self.shared_utilities.update(obj)
-
+        # Check for conflicting key
+        loaded_keys = self.shared_utilities.keys()
+        for value, key in enumerate(obj):
+            if key in loaded_keys:
+                print(f"Error loading plugin shared utilities: Conflicting key name '{key}'. Will not be loaded.")
+                continue
+            else:
+                self.shared_utilities[key] = value
+            
 # Used for testing, disregard
 if __name__ == "__main__":
     instance = Plugins()
