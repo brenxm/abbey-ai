@@ -24,11 +24,11 @@ class Notes:
     }
     """
 
-    def __init__(self, memory):
-        self.memory = memory
+    def __init__(self, chat_history, **kwarg):
+        self.chat_history = chat_history
         self.notes_file_path = os.path.join("data", "notes_data.json")
         self.load()
-        self.parser_id = {
+        self.parser_obj = {
                 "keywords": re.compile(r"((my notes|my plans).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(my notes|my plans))", re.IGNORECASE),
                 "prior_function": [
                     {
@@ -38,7 +38,7 @@ class Notes:
                         }
                     }
                 ]
-            },
+            }
         
 
     def load(self):
@@ -247,33 +247,6 @@ class Notes:
 
         return response_obj
 
-
-    @property
-    def parser_obj(self):
-        return   [
-             {
-                "keywords": re.compile(r"((my notes|my plans).+?(check|update|modify|add|create|make|write|read|open|delete|remove)|(update|modify|add|create|make|write|read|open|check|delete|remove).+?(my notes|my plans))", re.IGNORECASE),
-                "prior_function": [
-                    {
-                        "function": self.prior_fn,
-                        "arg": {
-
-                        }
-                    }
-                ]
-            },
-            {
-                # TODO: Fix
-                "keywords": ["list of available notes"],
-                "prior_function": [
-                    {
-                        "function": self.list_of_notes,
-                        "arg": {}
-                    }
-                ]
-            }
-        ]
-
     def prior_fn(self, obj):
         quick_system_response = f"The user ask you to complete a task. This is the requested task '{obj['prompt']}'. Response a quick, laconic confirmation."
 
@@ -311,7 +284,7 @@ class Notes:
                 model = 'gpt-4',
                 messages = [
                     {
-                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                        "role": "system", "content": f"These are the chat history. {str(self.chat_history)}"
                     },
                     {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
@@ -349,7 +322,7 @@ class Notes:
                 model = 'gpt-4',
                 messages = [
                     {
-                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                        "role": "system", "content": f"These are the chat history. {str(self.chat_history)}"
                     },
                     {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
@@ -389,7 +362,7 @@ class Notes:
                 model = 'gpt-4',
                 messages = [
                     {
-                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                        "role": "system", "content": f"These are the chat history. {str(self.chat_history)}"
                     },
                      {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"
@@ -428,7 +401,7 @@ class Notes:
                 model = 'gpt-4',
                 messages = [
                     {
-                        "role": "system", "content": f"These are the chat history. {str(self.memory.chat_history)}"
+                        "role": "system", "content": f"These are the chat history. {str(self.chat_history)}"
                     },
                      {
                         "role": "system", "content": f"current date and time: {str(datetime.datetime.now())}"

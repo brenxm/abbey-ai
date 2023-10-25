@@ -56,8 +56,9 @@ class KeywordParser():
         return response
         
     def add_object(self, obj):
+        print(type(obj))
         if not isinstance(obj, (dict, list)):
-            raise ValueError(f"Must be a 'keyword object' or a list a list of 'keyword object'")
+            raise ValueError(f"Cannot load: '{obj}. Must be a 'keyword object' or a list a list of 'keyword object'")
         
         # Accept an object, validate if it conform to valid schema
         def validate_obj(obj):

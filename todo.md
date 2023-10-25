@@ -1,10 +1,17 @@
-Known bugs to fix:
-IMPORTANT!:
-1. After recording sound, program will pause.
-2. Apply error case when no voice was recorded
-3. Long pauses at prompt
+Todo:
+1. Notes plugin documentation
+2. Reminders plugin documentation
+3. Implement VSCode Plugin
+
+
+Known bugs:
 
 
 Feature to add:
-1. Compress and remove silences in the voice generated to reduce overall time. For efficiency and saving recources.
-2. Reduce volume while speaking
+
+
+
+COMPLETED:
+- Compress and remove silences in the voice generated to reduce overall time. For efficiency and saving recources.
+- Reduce volume while speaking
+

@@ -157,7 +157,6 @@ class VoiceInput():
 
 
     def mic_stream(self, stream, p):
-        print('started streaming')
         silence_start_time = None
         silent_called = False
         detected = False
@@ -180,7 +179,6 @@ class VoiceInput():
                 elif time.time() - silence_start_time > 1.5 and not detected and sound_detected: 
                     detected = True
                     silent_called = True
-                    print('detected')
                     index = len(audio_chunks)
                     detected_index.append(index)
                     t = threading.Thread(target=self.cut_audio_chunks, args = (detected_index, audio_chunks, ))
@@ -213,8 +211,6 @@ class VoiceInput():
                 cut_out = self.trim_data(cut_out)
                 self.data_to_queue(cut_out)
             
-        print('done streaming')
-
 
     def open_mic(self, buffer_size = 1024):
         pya = pyaudio.PyAudio()
@@ -269,5 +265,3 @@ class VoiceInput():
         print(f"removed useless chunks: {counter}x!")
         print(f"used chunks: {len(audio_chunks)}")
         return audio_chunks
-
-        # Trim ending

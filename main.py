@@ -26,9 +26,6 @@ queue_lock = Lock()
 audio_queue = []
 tts_queue = []
 
-# Initialization process
-
-
 # Initialize dependencies
 keyword_parser = KeywordParser()
 memory = AIMemory()
@@ -45,7 +42,6 @@ plugins = Plugins()
 # Load shared utilities to be used to all plugins
 plugins.load_shared_utilities({'chat_history': memory.chat_history})
 plugins.load_shared_utilities({'ai_say': tts.convert})
-# TODO: add a error handling in load_shared_utilities to alert if there is conflicting 'keys' 
 
 # Load all plugin instances
 plugins.load_plugins(['./plugins/'])
