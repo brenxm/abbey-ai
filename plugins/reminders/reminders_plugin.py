@@ -158,11 +158,10 @@ class Reminders():
         return ", ".join(titles)
 
     def prior_fn(self, arg):
-        print("CALLED THIS")
         keywords = {
             "create": ["create", "make", "add"],
             "read": ["check", "read"],
-            "update": ["update", "rewrite"],
+            "update": ["update", "rewrite", "overwrite", "change"],
             "delete": ["remove", "delete", "cancel"]
         }
 
