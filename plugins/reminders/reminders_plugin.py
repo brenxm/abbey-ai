@@ -131,7 +131,6 @@ class Reminders():
             ]
         }
 
-
     def save_reminders(self):
         path = 'data/reminders.json'
         with open(path, 'w') as f:
@@ -162,7 +161,7 @@ class Reminders():
             "create": ["create", "make", "add"],
             "read": ["check", "read"],
             "update": ["update", "rewrite", "overwrite", "change"],
-            "delete": ["remove", "delete", "cancel"]
+            "delete": ["remove", "delete", "cancel",]
         }
 
         function_map = {
