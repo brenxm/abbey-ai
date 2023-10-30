@@ -22,13 +22,7 @@ There are four functions the user can use the reminder plugin
     - It update an existing reminder
 
 4. Delete
-    keywords: 'remove', 'delete', 'cancel' and 'mark as completed'
+    keywords: 'remove', 'delete', 'cancel', 'mark as completed', and 'mark as complete'
     - Deletes an existing reminder
-
-5. Mark as completed
-    keywords: 'mark as completed' and 'is complete'
-    - Mark a reminder as complete. If the reminder is a repetitive, it will stop reminding you until the next cycle. If the next due is next day, it will reset the next day (due day) and if it's 2 days or more before the next due day, it will reset the day before the next due day.
-
-    If the reminder is set as exact day, marking as complete will delete the reminder and will be sent to the history.
 
 

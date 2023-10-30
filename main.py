@@ -41,6 +41,7 @@ plugins = Plugins()
 
 # Load shared utilities to be used to all plugins
 plugins.load_shared_utilities({'chat_history': memory.chat_history})
+
 plugins.load_shared_utilities({'ai_say': tts.convert})
 
 # Load all plugin instances

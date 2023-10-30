@@ -15,6 +15,7 @@ class Reminders():
     '''
     def __init__(self, ai_say, **kwarg):
         self.ai_say = ai_say
+        print(f"initialized reminder, with ai_say: {ai_say}")
         self.reminders = []
         self.load_reminders()
         self.init_check_thread()
@@ -161,7 +162,7 @@ class Reminders():
             "create": ["create", "make", "add"],
             "read": ["check", "read"],
             "update": ["update", "rewrite", "overwrite", "change"],
-            "delete": ["remove", "delete", "cancel",]
+            "delete": ["remove", "delete", "cancel", "mark as complete", "mark as completed"]
         }
 
         function_map = {
@@ -350,7 +351,6 @@ class Reminders():
         )
 
         return response
-
 
 def register(arg):
     return Reminders(**arg)
