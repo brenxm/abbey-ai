@@ -1,17 +1,9 @@
-from fn_module.vscode.vscode_module import get_vscode, write_vscode
 
 
 class FunctionMap():
     def __init__(self):
         self.functions = [
-            {
-                "name": 'get_vscode',
-                'function': get_vscode
-            },
-            {
-                "name": "write_vscode",
-                "function": write_vscode
-            }
+           
         ]
         
     # get function

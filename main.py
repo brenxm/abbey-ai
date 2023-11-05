@@ -12,14 +12,12 @@ import pygetwindow as gw
 import pyautogui
 from test import PromptRequest
 from keyword_parser import KeywordParser
-from fn_module.vscode.vscode_module import get_vscode, write_vscode
 import re
 from notes import Notes
 import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
 from reminders import Reminders
-from fn_module.vscode.vscode_module import VSCodeModule
 from plugins.plugins import Plugins
 
 queue_lock = Lock()
@@ -36,7 +34,6 @@ voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
-vscode_module = VSCodeModule(keyword_parser)
 plugins = Plugins()
 
 # Load shared utilities to be used to all plugins

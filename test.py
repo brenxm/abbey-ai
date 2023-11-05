@@ -1,4 +1,3 @@
-from fn_module.vscode.vscode_module import get_vscode
 from dotenv import load_dotenv
 import json
 import openai
