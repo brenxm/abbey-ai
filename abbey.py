@@ -1,4 +1,3 @@
-from utils.clipboard import get_copied_text
 from dynamic_memory import AIMemory
 from audioplayer import AudioPlayer
 from dotenv import load_dotenv
@@ -7,7 +6,6 @@ import json
 import openai
 import os
 import re
-import subprocess
 
 load_dotenv()
 

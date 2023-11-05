@@ -4,9 +4,6 @@ from tts import TextToSpeech
 from stt import VoiceInput
 from audioplayer import AudioPlayer
 from threading import Lock
-from PyQt6.QtCore import QThread
-from PyQt6.QtWidgets import QApplication
-import subprocess
 from dynamic_memory import AIMemory
 import pygetwindow as gw
 import pyautogui
@@ -17,7 +14,6 @@ from notes import Notes
 import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
-from reminders import Reminders
 from plugins.plugins import Plugins
 
 queue_lock = Lock()
