@@ -5,7 +5,6 @@ from stt import VoiceInput
 from audioplayer import AudioPlayer
 from threading import Lock
 from dynamic_memory import AIMemory
-import pygetwindow as gw
 from openai_api import PromptRequest
 from keyword_parser import KeywordParser
 import re
@@ -14,6 +13,10 @@ import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
 from plugins.plugins import Plugins
+from PyQt6.QtWidgets import QApplication
+from gui import create_tray_icon
+import sys
+import threading
 
 queue_lock = Lock()
 audio_queue = []
@@ -31,6 +34,7 @@ abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
 request = PromptRequest("gpt-4")
 plugins = Plugins()
+
 
 # Load shared utilities to be used to all plugins
 plugins.load_shared_utilities({'chat_history': memory.chat_history})
@@ -258,4 +262,12 @@ keyword_parser.add_object([
 ]
 )
 
-voice_input.init(prompt_handle)
+start_app_thread = threading.Thread(target=(voice_input.init), args=(prompt_handle,))
+start_app_thread.start()
+
+app = QApplication(sys.argv)
+app.setQuitOnLastWindowClosed(False)
+tray_icon = create_tray_icon()
+
+print('how it;')
+sys.exit(app.exec())
