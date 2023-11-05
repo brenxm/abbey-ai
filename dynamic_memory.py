@@ -5,7 +5,7 @@ import json
 class AIMemory():
     def __init__(self, chat_limit = 10):
         self.chat_history = []
-        self.path_file = os.path.join("data", "dynamic_memory", "ai_dynamic_memory.json")
+        self.file_path = os.path.join(os.environ["LOCALAPPDATA"], "Summer AI", "data", "chat_history.json")
         self.chat_limit = chat_limit
         self._load_memory()
         
@@ -38,13 +38,13 @@ class AIMemory():
             "chat_history": self.chat_history
         }
         
-        with open(self.path_file, "w") as f:
+        with open(self.file_path, "w") as f:
             json.dump(dm_obj, f, indent=4)
             
             
     def _load_memory(self):
         try:
-            with open(self.path_file, "r") as f:
+            with open(self.file_path, "r") as f:
                 data = json.load(f)
                 
             self.chat_history = data["chat_history"]

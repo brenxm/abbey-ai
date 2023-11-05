@@ -3,7 +3,9 @@ import json
 import openai
 import os
 
-load_dotenv()
+ENV_PATH = os.path.join(os.environ['LOCALAPPDATA'], 'Summer AI', '.env')
+
+load_dotenv(dotenv_path=ENV_PATH)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

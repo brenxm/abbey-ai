@@ -1,7 +1,10 @@
 .env
+*.exe
 /audio_queue
 /audio
 /.vscode
 /__pycache__
 /data
 /fn_module/vscode/abbeyai/node_modules
+/dist
+/build

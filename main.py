@@ -6,11 +6,10 @@ from audioplayer import AudioPlayer
 from threading import Lock
 from dynamic_memory import AIMemory
 import pygetwindow as gw
-import pyautogui
-from test import PromptRequest
+from openai_api import PromptRequest
 from keyword_parser import KeywordParser
 import re
-from notes import Notes
+import os
 import datetime
 from function_map import FunctionMap
 from response_streamer import ResponseStreamer
@@ -20,10 +19,11 @@ queue_lock = Lock()
 audio_queue = []
 tts_queue = []
 
+PLUGIN_PATH = os.path.join(os.environ["LOCALAPPDATA"], "Summer AI", "plugins")
+
 # Initialize dependencies
 keyword_parser = KeywordParser()
 memory = AIMemory()
-notes = Notes(memory)
 audio_player = AudioPlayer(tts_queue)
 tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
@@ -38,7 +38,7 @@ plugins.load_shared_utilities({'chat_history': memory.chat_history})
 plugins.load_shared_utilities({'ai_say': tts.convert})
 
 # Load all plugin instances
-plugins.load_plugins(['./plugins/'])
+plugins.load_plugins([PLUGIN_PATH])
 
 # Register all loaded plugins to keyword_parser
 keyword_parser.register_plugins(plugins.loaded_plugins)
@@ -55,27 +55,8 @@ function_map.add_function([
         }
     ])
 
-abbey.set_personality("You are my AI assistant named Abbey. You respond with direct to the point, elaborated but straight to point answer. Address me as 'boss' or 'sir' without comma ',' similar to Tony Stark's personal AI named Jarvis.")
 
-abbey.set_name("Abbey")
-
-blackboard_open = False
-
-def get_active_window_title():
-    window = gw.getWindowsWithTitle(pyautogui.getActiveWindow().title)
-    
-    if window:
-        return window[0].title.lower()
-    return None
-
-
-def write_message_to_pipe(message):
-    if message:
-        with open("gui/message_transfer.txt", "w") as f:
-            f.write(message)
-            
-
-def handle_prompt_test(prompt_input):
+def prompt_handle(prompt_input):
     
     date = datetime.datetime.now()
     
@@ -277,6 +258,4 @@ keyword_parser.add_object([
 ]
 )
 
-keyword_parser.add_object(notes.parser_obj)
-    
-voice_input.init(handle_prompt_test)
+voice_input.init(prompt_handle)
