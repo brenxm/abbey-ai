@@ -3,23 +3,21 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import QCoreApplication
 import os
-import threading
-from time import sleep
 
-
-def create_tray_icon():
+def create_tray_icon(terminate_app, clear_chat_hx):
     icon_path = os.path.join(os.environ["LOCALAPPDATA"], "Summer AI", "icon.png")
 
     app_icon = QIcon(icon_path)
     menu = QMenu()
 
+    # Clear chat history
+    clear_chat_action = menu.addAction("Clear chat history")
+    clear_chat_action.triggered.connect(clear_chat_hx)
+
     # Add one or more actions to the menu
     exit_action = menu.addAction("Exit")
-    exit_action.triggered.connect(on_exit_trigger)
-
-    enable_action = menu.addAction("Enable")
-    enable_action.triggered.connect(on_exit_trigger)
-
+    exit_action.triggered.connect(terminate_app)
+ 
     tray_icon = QSystemTrayIcon()
     tray_icon.setIcon(app_icon)
     tray_icon.setContextMenu(menu)
@@ -27,6 +25,3 @@ def create_tray_icon():
     tray_icon.show()
     return tray_icon
 
-def on_exit_trigger():
-    QApplication.quit()
-    sys.exit()

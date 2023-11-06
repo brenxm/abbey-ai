@@ -36,6 +36,7 @@ class VoiceInput():
         self.mic_thread_running = False
         self.detected_silence = False
         self.detected_index = []
+        self.terminate = False
 
         with sr.Microphone() as mic:
             self.SAMPLE_RATE = mic.SAMPLE_RATE
@@ -48,7 +49,7 @@ class VoiceInput():
 
         self.listening = True
 
-        while self.listening:
+        while self.listening and not self.terminate:
             while self._keyboard_listening:
                 print('Listening...')
                 text = self._start_record()

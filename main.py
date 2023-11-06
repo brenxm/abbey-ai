@@ -262,12 +262,15 @@ keyword_parser.add_object([
 ]
 )
 
+def terminate_app():
+    voice_input.terminate = True
+    QApplication.quit()
+
 start_app_thread = threading.Thread(target=(voice_input.init), args=(prompt_handle,))
 start_app_thread.start()
 
 app = QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
-tray_icon = create_tray_icon()
+tray_icon = create_tray_icon(terminate_app, memory.clear)
 
-print('how it;')
 sys.exit(app.exec())
