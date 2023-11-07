@@ -1,5 +1,6 @@
 .env
 *.exe
+*.spec
 /audio_queue
 /audio
 /.vscode

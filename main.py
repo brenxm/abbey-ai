@@ -32,7 +32,7 @@ tts = TextToSpeech(tts_queue, audio_player)
 voice_input = VoiceInput(audio_player)
 abbey = AbbeyAI(tts_queue, None, audio_player, tts)
 fn_interface = FunctionsInterface()
-request = PromptRequest("gpt-4")
+request = PromptRequest("gpt-4-turbos")
 plugins = Plugins()
 
 
